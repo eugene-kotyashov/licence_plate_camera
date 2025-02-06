@@ -70,3 +70,6 @@ conan/
 *.gcno
 *.gcda
 *.gcov 
+
+build_release/
+build_debug/
