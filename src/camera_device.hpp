@@ -30,10 +30,12 @@ struct CameraDevice {
         const std::string& username,
         const std::string& password
     ) {
-        NET_DVR_USER_LOGIN_INFO loginInfo;
-        NET_DVR_DEVICEINFO_V40 deviceInfoV40;
+        NET_DVR_USER_LOGIN_INFO loginInfo = {0};
+        NET_DVR_DEVICEINFO_V40 deviceInfoV40 = {0};
         loginInfo.bUseAsynLogin = 0;
+
         strncpy(
+
             loginInfo.sUserName, username.c_str(),
              MAX_USERNAME_LENGTH);
         strncpy(

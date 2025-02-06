@@ -1,6 +1,9 @@
 param(
-    [switch]$Rebuild
+    [switch]$Rebuild,
+    [string]$BuildConfig = "Release"
 )
+
+
 
 # Find MSBuild.exe
 $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
@@ -18,7 +21,7 @@ if (-not $msbuildPath) {
 # Set paths
 $buildDir = "build_release"
 $solutionFile = Join-Path $buildDir "fltk_app.sln"
-$outputDir = Join-Path $buildDir "bin\Release"
+$outputDir = Join-Path $buildDir  "bin\$BuildConfig"
 $exePath = Join-Path $outputDir "fltk_app.exe"
 
 # Check if solution exists
@@ -39,9 +42,10 @@ $buildTarget = if ($Rebuild) { "Rebuild" } else { "Build" }
 # Build arguments as separate strings
 $buildArgs = @(
     "$solutionFile"
-    "/p:Configuration=Release"
+    "/p:Configuration=$BuildConfig"
     "/p:Platform=x64"
     "/t:$buildTarget"
+
 )
 
 & $msbuildPath $buildArgs
