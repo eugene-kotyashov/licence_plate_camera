@@ -11,6 +11,7 @@ void button_cb(Fl_Widget* widget, void*) {
     widget->window()->hide();
 }
 
+
 // Add callback functions for connect and disconnect
 void connect_cb(Fl_Widget* widget, void*) {
     // Get the input widget from the window
@@ -28,32 +29,44 @@ void disconnect_cb(Fl_Widget* widget, void*) {
 
 int main(int argc, char *argv[]) {
     // Create a window with more height to accommodate new controls
-    Fl_Window* window = new Fl_Window(300, 250, "FLTK Window");
-    window->begin();
+    CameraDevice camera_device;
+    if (!camera_device.isSdkInitialized) {
+        Fl_Window error_window(300, 250, "Error");
+        error_window.begin();
+        Fl_Button ok_button(110, 200, 80, 30, "OK");
+        ok_button.callback(button_cb);
+        error_window.end();
+        error_window.show(argc, argv);
+        return Fl::run();
+    }
+    
+    
+    Fl_Window window (300, 250, "FLTK Window");
+    window.begin();
 
     // Add IP input field
-    Fl_Input* ip_input = new Fl_Input(70, 20, 120, 25, "IP:");
-    ip_input->value("127.0.0.1");  // Default value
+    Fl_Input ip_input(70, 20, 120, 25, "IP:");
+    ip_input.value("127.0.0.1");  // Default value
 
     // Add Port input field
-    Fl_Int_Input* port_input = new Fl_Int_Input(240, 20, 50, 25, "Port:");
-    port_input->value("8080");  // Default port value
+    Fl_Int_Input port_input(240, 20, 50, 25, "Port:");
+    port_input.value("8080");  // Default port value
     
     // Add Connect and Disconnect buttons
-    Fl_Button* connect_btn = new Fl_Button(70, 60, 80, 30, "Connect");
-    connect_btn->callback(connect_cb);
+    Fl_Button connect_btn(70, 60, 80, 30, "Connect");
+    connect_btn.callback(connect_cb, &camera_device);
 
-    Fl_Button* disconnect_btn = new Fl_Button(160, 60, 80, 30, "Disconnect");
-    disconnect_btn->callback(disconnect_cb);
+    Fl_Button disconnect_btn(160, 60, 80, 30, "Disconnect");
+    disconnect_btn.callback(disconnect_cb, &camera_device);
 
     // Move OK button lower
-    Fl_Button* button = new Fl_Button(110, 200, 80, 30, "OK");
-    button->callback(button_cb);
+    Fl_Button button(110, 200, 80, 30, "OK");
+    button.callback(button_cb, &camera_device);
 
-    window->end();
-    window->show(argc, argv);
+    window.end();
+    window.show(argc, argv);
 
-    CameraDevice camera_device("127.0.0.1", 8080, "admin", "123456");
+    
 
     // Enter the FLTK event loop
     return Fl::run();
