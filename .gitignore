@@ -74,3 +74,4 @@ conan/
 build_release/
 build_debug/
 lib/
+sdk_log/
