@@ -14,6 +14,19 @@ add_executable(${PROJECT_NAME} WIN32
     src/main.cpp
 )
 
+# Add library path for HCNetSDK
+target_include_directories(${PROJECT_NAME} PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/incEn
+)
+
+# Link HCNetSDK libraries
+target_link_libraries(${PROJECT_NAME} PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/lib/HCNetSDK.lib
+    ${CMAKE_CURRENT_SOURCE_DIR}/lib/HCCore.lib
+    ${CMAKE_CURRENT_SOURCE_DIR}/lib/PlayCtrl.lib
+)
+
+
 # Link FLTK libraries
 target_link_libraries(${PROJECT_NAME} PRIVATE
     fltk fltk_gl fltk_forms fltk_images
