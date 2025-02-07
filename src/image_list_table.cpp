@@ -1,5 +1,7 @@
 #include "image_list_table.hpp"
 
+#include <iostream>
+
 ImageListTable::ImageListTable(int X, int Y, int W, int H, const char *L)
     : Fl_Table_Row(X, Y, W, H, L)
 {
@@ -17,6 +19,7 @@ ImageListTable::ImageListTable(int X, int Y, int W, int H, const char *L)
 
     // Set row height
     row_height_all(IMAGE_SIZE + 2 * MARGIN);
+
 }
 
 void ImageListTable::draw_cell(TableContext context, int R, int C, int X, int Y, int W, int H)
@@ -25,6 +28,7 @@ void ImageListTable::draw_cell(TableContext context, int R, int C, int X, int Y,
     {
     case CONTEXT_CELL:
     {
+        
         draw_data(R, C, X, Y, W, H);
         break;
     }
@@ -127,6 +131,7 @@ void ImageListTable::addItem(const ListItem &item)
 {
     items.push_back(item);
     rows(items.size());
+    row_height_all(IMAGE_SIZE + 2 * MARGIN);
     redraw();
 }
 
