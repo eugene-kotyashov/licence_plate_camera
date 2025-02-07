@@ -72,13 +72,17 @@ $requiredDlls = @(
     "bin\libpng16.dll"
 )
 
+
 # Copy SDK DLLs if they exist
 $sdkDlls = @(
+    "libssl-1_1-x64.dll",
+    "libcrypto-1_1-x64.dll",
     "HCCore.dll",
     "HCNetSDK.dll",
     "PlayCtrl.dll",
     "SuperRender.dll",
     "AudioRender.dll",
+
     "HCNetSDKCom\HCAlarm.dll",
     "HCNetSDKCom\HCGeneralCfgMgr.dll",
     "HCNetSDKCom\HCPreview.dll"

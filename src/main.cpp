@@ -71,11 +71,11 @@ int main(int argc, char *argv[]) {
 
     // Add IP input field
     Fl_Input ip_input(70, 20, 120, 25, "IP:");
-    ip_input.value("127.0.0.1");  // Default value
+    ip_input.value("192.168.0.64");  // Default value
 
     // Add Port input field
     Fl_Int_Input port_input(240, 20, 50, 25, "Port:");
-    port_input.value("8080");  // Default port value
+    port_input.value("8000");  // Default port value
 
     // Add Username field
     Fl_Input username_input(70, 55, 220, 25, "User:");
