@@ -71,6 +71,7 @@ void configure_anpr_cb(Fl_Widget* widget, void* camera_device_ptr) {
 
 int main(int argc, char *argv[]) {
     // Create a window with more height to accommodate new controls
+
     CameraDevice camera_device;
     if (!camera_device.isSdkInitialized) {
         ui::MessageDialog::showError(

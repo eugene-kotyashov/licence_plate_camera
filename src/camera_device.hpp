@@ -4,6 +4,7 @@
 
 #include <string>
 #include "../incEn/HCNetSDK.h"
+#include "alarm_callback.hpp"
 
 struct CameraDevice {
     const int MAX_USERNAME_LENGTH = 32;
@@ -82,12 +83,26 @@ struct CameraDevice {
             lastError = NET_DVR_GetLastError();
             return;
         }
+
+        if (!NET_DVR_SetDVRMessageCallBack_V50(
+            0, GetLicencePlatePicsAndText, nullptr
+        )) {
+            lastError = NET_DVR_GetLastError();
+        }
     }
+
 
     void disableArming() {
         if (!isSdkInitialized) return;
         if (loggedUserId < 0) return;
-        NET_DVR_SETUPALARM_PARAM struSetupParam={0};
+        if (!NET_DVR_CloseAlarmChan_V30(lHandle))
+        {
+            lastError = NET_DVR_GetLastError();
+        }
+        NET_DVR_SetDVRMessageCallBack_V50(
+            0, nullptr, nullptr
+        );
+
     }
 
 
