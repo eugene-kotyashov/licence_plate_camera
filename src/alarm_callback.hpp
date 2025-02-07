@@ -2,6 +2,7 @@
 #define ALARM_CALLBACK_HPP
 #include "HCNetSDK.h"
 #include "image_list_table.hpp"
+#include <FL/Fl_JPEG_Image.H>
 #include <cstdio>
 
 void CALLBACK GetLicencePlatePicsAndText(
@@ -12,7 +13,7 @@ void CALLBACK GetLicencePlatePicsAndText(
     void *pUser)
 {
     int i = 0;
-    char filename[100];
+   
     ImageListTable* table = (ImageListTable*)pUser;
     switch (lCommand)
     {
@@ -40,7 +41,9 @@ void CALLBACK GetLicencePlatePicsAndText(
     case COMM_UPLOAD_PLATE_RESULT:
     {
         NET_DVR_PLATE_RESULT struPlateResult = {0};
+        ListItem item;
         memcpy(&struPlateResult, pAlarmInfo, sizeof(struPlateResult));
+        item.plateText = struPlateResult.struPlateInfo.sLicense;
         printf("License Plate Number: %s\n", struPlateResult.struPlateInfo.sLicense); // License plate number
         switch (struPlateResult.struPlateInfo.byColor)                                // License plate color
         {
@@ -62,8 +65,10 @@ void CALLBACK GetLicencePlatePicsAndText(
         // Scene picture
         if (struPlateResult.dwPicLen != 0 && struPlateResult.byResultType == 1)
         {
-           
+            item.vehicleImage = std::make_shared<Fl_JPEG_Image>("vehicle", 
+                (const unsigned char*)struPlateResult.pBuffer1);
         }
+
         // License plate picture
         if (struPlateResult.dwPicPlateLen != 0 && struPlateResult.byResultType == 1)
         {
