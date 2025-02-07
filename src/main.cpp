@@ -74,7 +74,11 @@ void configure_anpr_cb(Fl_Widget* widget, void* camera_device_ptr) {
         return;
     }
 
-    camera_device->enableArming();
+    Fl_Window* window = widget->window();
+    ImageListTable* table = (ImageListTable*)window->child(7);
+
+    camera_device->enableArming(table);
+
 
     ui::MessageDialog::show("ANPR enable successful");
 }
@@ -119,7 +123,7 @@ int main(int argc, char *argv[]) {
     anpr_btn.callback(configure_anpr_cb, &camera_device);
 
     // Add the table
-    ImageListTable* table = new ImageListTable(20, 220, 760, 320, "Detection Results");
+    ImageListTable table(20, 220, 760, 320, "Detection Results");
     
     // Example of adding items (you would do this in response to events)
     ListItem item;
@@ -134,13 +138,13 @@ int main(int argc, char *argv[]) {
         return  Fl::run();
     }
     
-    item.image1 = img1;
-    item.image2 = img2;
+    item.vehicleImage = img1;
+    item.plateImage = img2;
     
-    if (item.image1 && item.image2) {  // Only add if both images loaded successfully
-        item.text = "License Plate: ABC123";
+    if (item.vehicleImage && item.plateImage) {  // Only add if both images loaded successfully
+        item.plateText = "License Plate: ABC123";
         for (int i = 0; i < 10; i++) {
-            table->addItem(item);
+            table.addItem(item);
         }
 
     }

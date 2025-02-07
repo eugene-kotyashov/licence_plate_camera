@@ -64,10 +64,6 @@ void drawImage(
     int img_y = Y + MARGIN;
     image->draw(img_x, img_y, img_w, img_h);
 
-    // Draw a border around the image
-    //fl_color(FL_GRAY);
-    //fl_rect(img_x, img_y, IMAGE_SIZE, IMAGE_SIZE);
-
 }
 
 void ImageListTable::draw_data(int R, int C, int X, int Y, int W, int H)
@@ -87,10 +83,10 @@ void ImageListTable::draw_data(int R, int C, int X, int Y, int W, int H)
     switch (C)
     {
     case 0: // First image
-        if (item.image1)
+        if (item.vehicleImage)
         {
             // Scale image to fit cell height while maintaining aspect ratio
-            drawImage(X, Y, W, H, MARGIN, IMAGE_SIZE, item.image1);
+            drawImage(X, Y, W, H, MARGIN, IMAGE_SIZE, item.vehicleImage);
         }
         else
         {
@@ -101,10 +97,10 @@ void ImageListTable::draw_data(int R, int C, int X, int Y, int W, int H)
         break;
 
     case 1: // Second image
-        if (item.image2)
+        if (item.plateImage)
         {
             // Center the image in the cell
-            drawImage(X, Y, W, H, MARGIN, IMAGE_SIZE, item.image2);
+            drawImage(X, Y, W, H, MARGIN, IMAGE_SIZE, item.plateImage);
         }
         else
         {
@@ -116,7 +112,7 @@ void ImageListTable::draw_data(int R, int C, int X, int Y, int W, int H)
 
     case 2: // Text
         fl_color(FL_BLACK);
-        fl_draw(item.text.c_str(), X + MARGIN, Y, W - 2 * MARGIN, H, FL_ALIGN_LEFT | FL_ALIGN_CENTER);
+        fl_draw(item.plateText.c_str(), X + MARGIN, Y, W - 2 * MARGIN, H, FL_ALIGN_LEFT | FL_ALIGN_CENTER);
         break;
     }
 

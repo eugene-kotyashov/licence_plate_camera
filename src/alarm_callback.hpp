@@ -1,6 +1,7 @@
 #ifndef ALARM_CALLBACK_HPP
 #define ALARM_CALLBACK_HPP
 #include "HCNetSDK.h"
+#include "image_list_table.hpp"
 #include <cstdio>
 
 void CALLBACK GetLicencePlatePicsAndText(
@@ -12,7 +13,7 @@ void CALLBACK GetLicencePlatePicsAndText(
 {
     int i = 0;
     char filename[100];
-
+    ImageListTable* table = (ImageListTable*)pUser;
     switch (lCommand)
     {
     case COMM_ALARM:

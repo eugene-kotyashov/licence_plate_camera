@@ -9,10 +9,11 @@
 #include <memory>
 
 struct ListItem {
-    std::shared_ptr<Fl_Image> image1;
-    std::shared_ptr<Fl_Image> image2;
-    std::string text;
+    std::shared_ptr<Fl_Image> vehicleImage;
+    std::shared_ptr<Fl_Image> plateImage;
+    std::string plateText;
 };
+
 
 class ImageListTable : public Fl_Table_Row {
 protected:
