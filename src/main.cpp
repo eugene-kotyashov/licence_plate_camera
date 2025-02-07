@@ -56,6 +56,19 @@ void disconnect_cb(Fl_Widget* widget, void* camera_device_ptr) {
     }
 }
 
+void configure_anpr_cb(Fl_Widget* widget, void* camera_device_ptr) {
+    CameraDevice* camera_device = (CameraDevice*)camera_device_ptr;
+    
+    if (camera_device->loggedUserId < 0) {
+        ui::MessageDialog::showError("Please connect to camera first");
+        return;
+    }
+
+    camera_device->enableArming();
+
+    ui::MessageDialog::show("ANPR enable successful");
+}
+
 int main(int argc, char *argv[]) {
     // Create a window with more height to accommodate new controls
     CameraDevice camera_device;
@@ -91,6 +104,10 @@ int main(int argc, char *argv[]) {
 
     Fl_Button disconnect_btn(160, 130, 80, 30, "Disconnect");
     disconnect_btn.callback(disconnect_cb, &camera_device);
+
+    // Add ANPR Config button
+    Fl_Button anpr_btn(70, 170, 170, 30, "Configure ANPR");
+    anpr_btn.callback(configure_anpr_cb, &camera_device);
 
     // Move OK button lower
     Fl_Button button(110, 250, 80, 30, "OK");

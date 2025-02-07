@@ -12,7 +12,7 @@ struct CameraDevice {
     bool isSdkInitialized = false;
     int loggedUserId = -1;
     int lastError = 0;
-    int lRealHandle = -1;
+    LONG lHandle = -1;
 
 
     CameraDevice()
@@ -60,6 +60,34 @@ struct CameraDevice {
             return;
         }
         loggedUserId = -1;
+    }
+
+    void enableArming()
+    {
+        if (!isSdkInitialized)
+            return;
+        if (loggedUserId < 0)
+            return;
+        NET_DVR_SETUPALARM_PARAM struSetupParam = {0};
+        struSetupParam.dwSize = sizeof(NET_DVR_SETUPALARM_PARAM);
+        // Alarm information type to upload:
+        // 0-History Alarm (NET_DVR_PLATE_RESULT), 1-Real-Time Alarm
+        // (NET_ITS_PLATE_RESULT)
+        struSetupParam.byAlarmInfoType = 1;
+        // Arming Level: Level-2 arming (for traffic device)
+        struSetupParam.byLevel = 1;
+        lHandle = NET_DVR_SetupAlarmChan_V41(loggedUserId, &struSetupParam);
+        if (lHandle < 0)
+        {
+            lastError = NET_DVR_GetLastError();
+            return;
+        }
+    }
+
+    void disableArming() {
+        if (!isSdkInitialized) return;
+        if (loggedUserId < 0) return;
+        NET_DVR_SETUPALARM_PARAM struSetupParam={0};
     }
 
 
