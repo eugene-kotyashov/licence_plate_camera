@@ -139,9 +139,10 @@ int main(int argc, char *argv[]) {
     
     if (item.image1 && item.image2) {  // Only add if both images loaded successfully
         item.text = "License Plate: ABC123";
-        for (int i = 0; i < 10; i++) {
+        //for (int i = 0; i < 10; i++) {
             table->addItem(item);
-        }
+        //}
+
     }
 
     // Move OK button to bottom

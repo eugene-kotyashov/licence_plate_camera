@@ -17,14 +17,14 @@ struct ListItem {
 class ImageListTable : public Fl_Table_Row {
 protected:
     std::vector<ListItem> items;
-    static const int IMAGE_SIZE = 128;  // Size of images in pixels
+     static const int IMAGE_SIZE = 100;  // Size of images in pixels
     static const int MARGIN = 2;       // Cell margin
-
     void draw_cell(TableContext context, int R, int C, int X, int Y, int W, int H) override;
     void draw_header(int X, int Y, int W, int H, const char* title);
     void draw_data(int R, int C, int X, int Y, int W, int H);
 
 public:
+   
     ImageListTable(int X, int Y, int W, int H, const char* L = 0);
     
     void addItem(const ListItem& item);
