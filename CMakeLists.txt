@@ -12,6 +12,7 @@ find_package(FLTK CONFIG REQUIRED)
 # Add executable
 add_executable(${PROJECT_NAME} WIN32
     src/main.cpp
+    src/image_list_table.cpp
 )
 
 # Add library path for HCNetSDK

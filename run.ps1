@@ -82,16 +82,28 @@ $sdkDlls = @(
     "PlayCtrl.dll",
     "SuperRender.dll",
     "AudioRender.dll",
-
     "HCNetSDKCom\HCAlarm.dll",
     "HCNetSDKCom\HCGeneralCfgMgr.dll",
     "HCNetSDKCom\HCPreview.dll"
 )
 
+$images = @(
+    "vehicle.png",
+    "plate.png"
+)
+
 # Create HCNetSDKCom directory if needed
 $sdkComDir = Join-Path $outputDir "HCNetSDKCom"
+
 if (-not (Test-Path $sdkComDir)) {
     New-Item -ItemType Directory -Path $sdkComDir | Out-Null
+}
+foreach ($image in $images) {
+    $sourcePath = "images\$image"
+    if (Test-Path $sourcePath) {
+        Copy-Item -Path $sourcePath -Destination $outputDir -Force
+        Write-Host "Copied $image"
+    }
 }
 
 # Copy vcpkg DLLs
@@ -125,5 +137,11 @@ foreach ($dll in $sdkDlls) {
 }
 
 # Run the application
+# Save the script path for reference
+$scriptPath = $PSScriptRoot
+Write-Host "Script running from: $scriptPath"
+
 Write-Host "`nLaunching application..."
-Start-Process -FilePath $exePath -Wait 
+Set-Location $outputDir
+Start-Process -FilePath fltk_app.exe -Wait 
+Set-Location $scriptPath
