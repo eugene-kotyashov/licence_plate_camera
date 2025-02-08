@@ -89,8 +89,11 @@ $sdkDlls = @(
 
 $images = @(
     "vehicle.png",
-    "plate.png"
+    "plate.png",
+    "vehicle.jpg",
+    "plate.jpg"
 )
+
 
 # Create HCNetSDKCom directory if needed
 $sdkComDir = Join-Path $outputDir "HCNetSDKCom"
@@ -141,7 +144,7 @@ foreach ($dll in $sdkDlls) {
 $scriptPath = $PSScriptRoot
 Write-Host "Script running from: $scriptPath"
 
-Write-Host "`nLaunching application..."
+Write-Host "`nLaunching application from $outputDir..."
 Set-Location $outputDir
 Start-Process -FilePath fltk_app.exe -Wait 
 Set-Location $scriptPath

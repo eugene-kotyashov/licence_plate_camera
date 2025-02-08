@@ -4,12 +4,13 @@ param(
     [switch]$Clean,
     [switch]$Rebuild
 )
-
+Write-Host "Using vcpkg from: $VcpkgRoot"
 # Check if VCPKG_ROOT is set or try to find vcpkg in common locations
 if ([string]::IsNullOrEmpty($VcpkgRoot)) {
     $commonPaths = @(
         "C:\vcpkg",
         "C:\dev\vcpkg",
+        "D:\Projects\vcpkg",
         "$env:USERPROFILE\vcpkg",
         "$env:USERPROFILE\source\vcpkg"
     )
@@ -117,13 +118,29 @@ $sdkDlls = @(
     "HCNetSDKCom\HCPreview.dll"
 )
 
+$images = @(
+    "vehicle.png",
+    "plate.png",
+    "vehicle.jpg",
+    "plate.jpg"
+)
+
 $outputDir = "$BuildDir\bin\$BuildType"
+
 
 # Create HCNetSDKCom directory if needed
 $sdkComDir = Join-Path $outputDir "HCNetSDKCom"
 
 if (-not (Test-Path $sdkComDir)) {
     New-Item -ItemType Directory -Path $sdkComDir | Out-Null
+}
+
+foreach ($image in $images) {
+    $sourcePath = "images\$image"
+    if (Test-Path $sourcePath) {
+        Copy-Item -Path $sourcePath -Destination $outputDir -Force
+        Write-Host "Copied $image"
+    }
 }
 
 # Copy vcpkg DLLs

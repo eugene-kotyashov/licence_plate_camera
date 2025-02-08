@@ -54,15 +54,16 @@ void ImageListTable::draw_header(int X, int Y, int W, int H, const char *title)
 
 
 void drawImage(
-    int X, int Y, int W, int H, int MARGIN, int IMAGE_SIZE, std::shared_ptr<Fl_Image> image)
+    int X, int Y, int W, int H, int MARGIN, int IMAGE_SIZE, Fl_Image& image)
 {
     // Scale image to fit cell height while maintaining aspect ratio
     int img_h = H - 2 * MARGIN;
-    float scale = (float)img_h / image->h();
-    int img_w = image->w() * scale;
+    float scale = (float)img_h / image.h();
+    int img_w = image.w() * scale;
     int img_x = X + (W - img_w) / 2;
     int img_y = Y + MARGIN;
-    image->draw(img_x, img_y, img_w, img_h);
+    image.draw(img_x, img_y, img_w, img_h);
+
 
 }
 
@@ -83,37 +84,21 @@ void ImageListTable::draw_data(int R, int C, int X, int Y, int W, int H)
     switch (C)
     {
     case 0: // First image
-        if (item.vehicleImage)
-        {
-            // Scale image to fit cell height while maintaining aspect ratio
-            drawImage(X, Y, W, H, MARGIN, IMAGE_SIZE, item.vehicleImage);
-        }
-        else
-        {
-            // Draw placeholder if no image
-            fl_color(FL_GRAY);
-            fl_rect(X + MARGIN, Y + MARGIN, IMAGE_SIZE, IMAGE_SIZE);
-        }
+        // Scale image to fit cell height while maintaining aspect ratio
+        drawImage(X, Y, W, H, MARGIN, IMAGE_SIZE, item.vehicleImage);
         break;
 
+
     case 1: // Second image
-        if (item.plateImage)
-        {
-            // Center the image in the cell
-            drawImage(X, Y, W, H, MARGIN, IMAGE_SIZE, item.plateImage);
-        }
-        else
-        {
-            // Draw placeholder if no image
-            fl_color(FL_GRAY);
-            fl_rect(X + MARGIN, Y + MARGIN, IMAGE_SIZE, IMAGE_SIZE);
-        }
+        drawImage(X, Y, W, H, MARGIN, IMAGE_SIZE, item.plateImage);
         break;
+
 
     case 2: // Text
         fl_color(FL_BLACK);
         fl_draw(item.plateText.c_str(), X + MARGIN, Y, W - 2 * MARGIN, H, FL_ALIGN_LEFT | FL_ALIGN_CENTER);
         break;
+
     }
 
     // Draw cell border
@@ -123,7 +108,7 @@ void ImageListTable::draw_data(int R, int C, int X, int Y, int W, int H)
     fl_pop_clip();
 }
 
-void ImageListTable::addItem(const ListItem &item)
+void ImageListTable::addItem(ListItem& item)
 {
     items.push_back(item);
     rows(items.size());

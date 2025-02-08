@@ -14,7 +14,7 @@ void CALLBACK GetLicencePlatePicsAndText(
 {
     int i = 0;
    
-    ImageListTable* table = (ImageListTable*)pUser;
+    ImageListTable* table = (ImageListTable* )pUser;
     switch (lCommand)
     {
     case COMM_ALARM:
@@ -41,11 +41,11 @@ void CALLBACK GetLicencePlatePicsAndText(
     case COMM_UPLOAD_PLATE_RESULT:
     {
         NET_DVR_PLATE_RESULT struPlateResult = {0};
-        ListItem item;
+        
         memcpy(&struPlateResult, pAlarmInfo, sizeof(struPlateResult));
-        item.plateText = struPlateResult.struPlateInfo.sLicense;
         printf("License Plate Number: %s\n", struPlateResult.struPlateInfo.sLicense); // License plate number
         switch (struPlateResult.struPlateInfo.byColor)                                // License plate color
+
         {
         case VCA_BLUE_PLATE:
             printf("Vehicle Color: Blue\n");
@@ -62,19 +62,31 @@ void CALLBACK GetLicencePlatePicsAndText(
         default:
             break;
         }
+        const unsigned char* vehicleImageBuf = nullptr;
+        const unsigned char* plateImageBuf = nullptr;
         // Scene picture
         if (struPlateResult.dwPicLen != 0 && struPlateResult.byResultType == 1)
+
         {
-            item.vehicleImage = std::make_shared<Fl_JPEG_Image>("vehicle", 
-                (const unsigned char*)struPlateResult.pBuffer1);
+            vehicleImageBuf =
+                (const unsigned char*)struPlateResult.pBuffer1;
         }
 
         // License plate picture
         if (struPlateResult.dwPicPlateLen != 0 && struPlateResult.byResultType == 1)
         {
+            plateImageBuf =
+                (const unsigned char*)struPlateResult.pBuffer2;
         }
+        
+        auto veh = new Fl_JPEG_Image(nullptr, vehicleImageBuf);
+        auto plate = new Fl_JPEG_Image(nullptr, plateImageBuf);
+        ListItem* item = new  ListItem(*veh, *plate, struPlateResult.struPlateInfo.sLicense);
+        table->addItem( *item);        
         // Processing other data...
+
         break;
+
     }
     case COMM_ITS_PLATE_RESULT:
     {

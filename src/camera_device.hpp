@@ -64,7 +64,7 @@ struct CameraDevice {
         loggedUserId = -1;
     }
 
-    void enableArming(ImageListTable* table)
+    void enableArming(void* table)
     {
         if (!isSdkInitialized)
             return;

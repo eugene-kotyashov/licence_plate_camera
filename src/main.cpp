@@ -11,21 +11,13 @@
 #include "ui_utils.hpp"
 #include "image_list_table.hpp"
 
-// Add this helper function at the top of the file
-std::shared_ptr<Fl_Image> loadImage(const char* path) {
-    std::shared_ptr<Fl_PNG_Image> img(new Fl_PNG_Image(path));
-    if (img->fail()) {
-        ui::MessageDialog::showError(std::string("Failed to load image: ") + path);
-        return nullptr;
-    }
-    return img;
-}
+
+std::vector<ListItem> plateDetectionData;
 
 // Callback function for the OK button
 void button_cb(Fl_Widget* widget, void*) {
     widget->window()->hide();
 }
-
 
 // Add callback functions for connect and disconnect
 void connect_cb(Fl_Widget* widget, void* camera_device_ptr) {
@@ -75,16 +67,30 @@ void configure_anpr_cb(Fl_Widget* widget, void* camera_device_ptr) {
     }
 
     Fl_Window* window = widget->window();
-    ImageListTable* table = (ImageListTable*)window->child(7);
+    ImageListTable* table = (ImageListTable*)window->child(8);
 
     camera_device->enableArming(table);
 
 
     ui::MessageDialog::show("ANPR enable successful");
+
 }
+
+void test_jpeg_cb(Fl_Widget* widget, void* camera_device_ptr) { 
+    Fl_Window* window = widget->window();
+    ImageListTable* table = (ImageListTable*)window->child(8);
+    auto veh = new Fl_JPEG_Image(nullptr, ListItem::LoadJPEGToBuffer("vehicle.jpg"));
+    auto plate = new Fl_JPEG_Image(nullptr, ListItem::LoadJPEGToBuffer("plate.jpg"));
+    ListItem* item = new  ListItem(*veh, *plate, "jpeg nuff");
+    table->addItem( *item);
+}
+
+
+
 
 int main(int argc, char *argv[]) {
     // Increase window size to accommodate the tableCameraDevice camera_device;
+
     
     CameraDevice camera_device;
     if (!camera_device.isSdkInitialized) {
@@ -122,32 +128,26 @@ int main(int argc, char *argv[]) {
     Fl_Button anpr_btn(70, 170, 170, 30, "Configure ANPR");
     anpr_btn.callback(configure_anpr_cb, &camera_device);
 
+    Fl_Button  test_jpeg_btn(400, 170, 170, 30, "Test jpeg buffer");
+    test_jpeg_btn.callback(test_jpeg_cb, &camera_device);
     // Add the table
     ImageListTable table(20, 220, 760, 320, "Detection Results");
     
-    // Example of adding items (you would do this in response to events)
-    ListItem item;
-    
-    // Load images with error checking
-    auto img1 = loadImage("vehicle.png");
-    auto img2 = loadImage("plate.png");
-    
-    if (!img1 || !img2) {
-        ui::MessageDialog::showError("Failed to load one or more images. Current directory: " + 
-            std::string(std::filesystem::current_path().string()));
-        return  Fl::run();
-    }
-    
-    item.vehicleImage = img1;
-    item.plateImage = img2;
-    
-    if (item.vehicleImage && item.plateImage) {  // Only add if both images loaded successfully
-        item.plateText = "License Plate: ABC123";
-        for (int i = 0; i < 10; i++) {
-            table.addItem(item);
-        }
 
-    }
+    //if (!item.vehicleImage.fail() && !item.plateImage.fail()) {  // Only add if both images loaded successfully
+    Fl_PNG_Image* vehicleImage = new Fl_PNG_Image("vehicle.png");
+    Fl_PNG_Image* plateImage = new Fl_PNG_Image("plate.png");
+
+	for (int i = 0; i < 2; i++) {
+
+		ListItem item(
+			*vehicleImage,
+			*plateImage,
+			"License Plate: ABC123"
+		);
+		table.addItem(item);
+	}
+
 
     // Move OK button to bottom
     Fl_Button button(360, 550, 80, 30, "OK");
