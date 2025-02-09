@@ -67,7 +67,7 @@ void configure_anpr_cb(Fl_Widget* widget, void* camera_device_ptr) {
     }
 
     Fl_Window* window = widget->window();
-    ImageListTable* table = (ImageListTable*)window->child(8);
+    ImageListTable* table = (ImageListTable*)window->child(9);
 
     camera_device->enableArming(table);
 
@@ -155,9 +155,11 @@ int main(int argc, char *argv[]) {
 		table.addItem(item);
 	}
 
-
-     window.end();
+    window.end();
     window.show(argc, argv);
-
+    
+    if (Fl::lock() != 0) {
+        std::cout << "FLTK is not compiled with threading support." << std::endl;
+    }
     return Fl::run();
 } 

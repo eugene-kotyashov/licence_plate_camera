@@ -42,10 +42,16 @@ void addAlarmResultView(
     } else {
         printf("plate image buffer is nullptr\n");
     }
-
+   
     ListItem *item = new ListItem(*veh, *plate, licensePlate);
+    Fl::lock();
+    printf("table has  %d items\n", table->getItemCount());
     table->addItem(*item);
+    Fl::unlock();
+    Fl::awake();
 }
+
+
 
 void CALLBACK GetLicencePlatePicsAndText(
     LONG lCommand,
@@ -110,15 +116,18 @@ void CALLBACK GetLicencePlatePicsAndText(
         if (struPlateResult.dwPicLen != 0 && struPlateResult.byResultType == 1)
 
         {
+            printf("Vehicle image buffer %d\n", i);
             vehicleImageBuf =
                 (const unsigned char*)struPlateResult.pBuffer1;
+
         }
 
         // License plate picture
         if (struPlateResult.dwPicPlateLen != 0 && struPlateResult.byResultType == 1)
         {
+            printf("plate image buffer %d\n", i);
             plateImageBuf =
-                (const unsigned char*)struPlateResult.pBuffer2;
+                (const unsigned char*)struPlateResult.pBuffer1;
         }
         
 
@@ -164,24 +173,24 @@ void CALLBACK GetLicencePlatePicsAndText(
                 (struITSPlateResult.struPicInfo[i].byType == 2))
 
             {
-                // vehicleImageBuf = struITSPlateResult.struPicInfo[i].pBuffer;
+                vehicleImageBuf = struITSPlateResult.struPicInfo[i].pBuffer;
                 printf("Vehicle image buffer number %d\n", i);
             }
             // License plate thumbnails
             if ((struITSPlateResult.struPicInfo[i].dwDataLen != 0) && (struITSPlateResult.struPicInfo[i].byType == 0))
 
             {
-                // plateImageBuf = struITSPlateResult.struPicInfo[i].pBuffer;
+                plateImageBuf = struITSPlateResult.struPicInfo[i].pBuffer;
                 printf("Plate image buffer number %d\n", i);
             }
-            /**
+            
 
             addAlarmResultView(
                 table,
                 vehicleImageBuf,
                 plateImageBuf,
                 struITSPlateResult.struPlateInfo.sLicense);
-            */
+            
             // Processing other data...
         }
         break;
