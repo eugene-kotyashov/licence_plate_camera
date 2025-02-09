@@ -78,7 +78,7 @@ void configure_anpr_cb(Fl_Widget* widget, void* camera_device_ptr) {
 
 void test_jpeg_cb(Fl_Widget* widget, void* camera_device_ptr) { 
     Fl_Window* window = widget->window();
-    ImageListTable* table = (ImageListTable*)window->child(8);
+    ImageListTable* table = (ImageListTable*)window->child(9);
     auto veh = new Fl_JPEG_Image(nullptr, ListItem::LoadJPEGToBuffer("vehicle.jpg"));
     auto plate = new Fl_JPEG_Image(nullptr, ListItem::LoadJPEGToBuffer("plate.jpg"));
     ListItem* item = new  ListItem(*veh, *plate, "jpeg nuff");
@@ -115,7 +115,7 @@ int main(int argc, char *argv[]) {
 
     // Add Password field
     Fl_Secret_Input password_input(70, 90, 220, 25, "Pass:");
-    password_input.value("123456");
+    password_input.value("Neolink79");
     
     // Add Connect and Disconnect buttons
     Fl_Button connect_btn(70, 130, 80, 30, "Connect");
@@ -128,17 +128,24 @@ int main(int argc, char *argv[]) {
     Fl_Button anpr_btn(70, 170, 170, 30, "Configure ANPR");
     anpr_btn.callback(configure_anpr_cb, &camera_device);
 
-    Fl_Button  test_jpeg_btn(400, 170, 170, 30, "Test jpeg buffer");
+    Fl_Button test_jpeg_btn(250, 170, 170, 30, "Test jpeg buffer");
     test_jpeg_btn.callback(test_jpeg_cb, &camera_device);
+
+    // Add Stop ANPR button - moved to a new position
+    Fl_Button stop_anpr_btn(430, 170, 170, 30, "Stop ANPR");
+    stop_anpr_btn.callback([](Fl_Widget*, void* v) {
+        auto* camera = static_cast<CameraDevice*>(v);
+        camera->disableArming();
+    }, &camera_device);
+
     // Add the table
     ImageListTable table(20, 220, 760, 320, "Detection Results");
     
-
     //if (!item.vehicleImage.fail() && !item.plateImage.fail()) {  // Only add if both images loaded successfully
     Fl_PNG_Image* vehicleImage = new Fl_PNG_Image("vehicle.png");
     Fl_PNG_Image* plateImage = new Fl_PNG_Image("plate.png");
 
-	for (int i = 0; i < 2; i++) {
+	for (int i = 0; i < 1; i++) {
 
 		ListItem item(
 			*vehicleImage,
@@ -149,11 +156,7 @@ int main(int argc, char *argv[]) {
 	}
 
 
-    // Move OK button to bottom
-    Fl_Button button(360, 550, 80, 30, "OK");
-    button.callback(button_cb, &camera_device);
-
-    window.end();
+     window.end();
     window.show(argc, argv);
 
     return Fl::run();

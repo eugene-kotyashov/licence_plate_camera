@@ -5,6 +5,48 @@
 #include <FL/Fl_JPEG_Image.H>
 #include <cstdio>
 
+void addAlarmResultView(
+    ImageListTable *table,
+    const unsigned char *vehicleImageBuf,
+    const unsigned char *plateImageBuf,
+    const std::string &licensePlate)
+
+{
+    Fl_Image *veh = new Fl_PNG_Image("vehicle.png");   
+    Fl_Image *plate = new Fl_PNG_Image("plate.png");
+
+    if (vehicleImageBuf != nullptr)
+    {
+        delete veh;
+        veh = new Fl_JPEG_Image(nullptr, vehicleImageBuf);
+        if (veh->fail())
+        {
+            delete veh;
+            printf("Failed to load vehicle image\n");
+            veh = new Fl_PNG_Image("vehicle.png"); 
+        }
+       
+    } else {
+        printf("vehicle image buffer is nullptr\n");
+    }
+
+    if (plateImageBuf != nullptr) {
+        delete plate;
+        plate = new Fl_JPEG_Image(nullptr, plateImageBuf);
+        if (plate->fail())
+        {
+            delete plate;
+            printf("Failed to load plate image\n");
+            plate = new Fl_PNG_Image("plate.png");
+        }
+    } else {
+        printf("plate image buffer is nullptr\n");
+    }
+
+    ListItem *item = new ListItem(*veh, *plate, licensePlate);
+    table->addItem(*item);
+}
+
 void CALLBACK GetLicencePlatePicsAndText(
     LONG lCommand,
     NET_DVR_ALARMER *pAlarmer,
@@ -43,8 +85,8 @@ void CALLBACK GetLicencePlatePicsAndText(
         NET_DVR_PLATE_RESULT struPlateResult = {0};
         
         memcpy(&struPlateResult, pAlarmInfo, sizeof(struPlateResult));
-        printf("License Plate Number: %s\n", struPlateResult.struPlateInfo.sLicense); // License plate number
-        switch (struPlateResult.struPlateInfo.byColor)                                // License plate color
+        printf("License Plate Number: %s\n", struPlateResult.struPlateInfo.sLicense);
+        switch (struPlateResult.struPlateInfo.byColor)                                
 
         {
         case VCA_BLUE_PLATE:
@@ -79,11 +121,14 @@ void CALLBACK GetLicencePlatePicsAndText(
                 (const unsigned char*)struPlateResult.pBuffer2;
         }
         
-        auto veh = new Fl_JPEG_Image(nullptr, vehicleImageBuf);
-        auto plate = new Fl_JPEG_Image(nullptr, plateImageBuf);
-        ListItem* item = new  ListItem(*veh, *plate, struPlateResult.struPlateInfo.sLicense);
-        table->addItem( *item);        
-        // Processing other data...
+
+        addAlarmResultView(
+            table,
+             vehicleImageBuf,
+              plateImageBuf,
+               struPlateResult.struPlateInfo.sLicense);
+
+
 
         break;
 
@@ -94,8 +139,8 @@ void CALLBACK GetLicencePlatePicsAndText(
         memcpy(&struITSPlateResult, pAlarmInfo, sizeof(struITSPlateResult));
         for (i = 0; i < struITSPlateResult.dwPicNum; i++)
         {
-            printf("License Plate Number: %s\n", struITSPlateResult.struPlateInfo.sLicense); // License plate number
-            switch (struITSPlateResult.struPlateInfo.byColor)                                // License plate color
+            printf("License Plate Number: %s\n", struITSPlateResult.struPlateInfo.sLicense); 
+            switch (struITSPlateResult.struPlateInfo.byColor)                               
             {
             case VCA_BLUE_PLATE:
                 printf("Vehicle Color: Blue\n");
@@ -112,22 +157,35 @@ void CALLBACK GetLicencePlatePicsAndText(
             default:
                 break;
             }
+            unsigned char* vehicleImageBuf = nullptr;
+            unsigned char* plateImageBuf = nullptr;
             // Save scene picture
             if ((struITSPlateResult.struPicInfo[i].dwDataLen != 0) && (struITSPlateResult.struPicInfo[i].byType == 1) ||
                 (struITSPlateResult.struPicInfo[i].byType == 2))
+
             {
-                
-                //fwrite(struITSPlateResult.struPicInfo[i].pBuffer, struITSPlateResult.struPicInfo[i].dwDataLen, 1, fSnapPic);
-                
+                // vehicleImageBuf = struITSPlateResult.struPicInfo[i].pBuffer;
+                printf("Vehicle image buffer number %d\n", i);
             }
             // License plate thumbnails
             if ((struITSPlateResult.struPicInfo[i].dwDataLen != 0) && (struITSPlateResult.struPicInfo[i].byType == 0))
+
             {
-                
+                // plateImageBuf = struITSPlateResult.struPicInfo[i].pBuffer;
+                printf("Plate image buffer number %d\n", i);
             }
+            /**
+
+            addAlarmResultView(
+                table,
+                vehicleImageBuf,
+                plateImageBuf,
+                struITSPlateResult.struPlateInfo.sLicense);
+            */
             // Processing other data...
         }
         break;
+
     }
     default:
         break;
