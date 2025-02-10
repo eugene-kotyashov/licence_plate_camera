@@ -113,7 +113,7 @@ struct CameraDevice {
             return -1;
         }
 
-        char *sFileName = "somefile.txt";       
+        char *sFileName = "black_white_list_template.xls";       
         
         int downloadHandle = NET_DVR_StartDownload(
             loggedUserId,
@@ -128,6 +128,28 @@ struct CameraDevice {
         }
 
         return downloadHandle;
+    }
+
+    int startUploadVehicleBlockAllowList(const char* filePath) {
+        if (!isSdkInitialized || loggedUserId < 0) {
+            return -1;
+        }
+        
+        int uploadHandle = NET_DVR_UploadFile_V40(
+            loggedUserId,
+            UPLOAD_VEHICLE_BLOCKALLOWLIST_FILE,
+            nullptr,
+            0,
+            filePath,
+            nullptr,
+            0
+        );
+
+        if (uploadHandle < 0) {
+            lastError = NET_DVR_GetLastError();
+        }
+
+        return uploadHandle;
     }
 
 

@@ -10,8 +10,9 @@
 #include "camera_device.hpp"
 #include "ui_utils.hpp"
 #include "image_list_table.hpp"
+#include <thread>
 
-#define TABLE_CONTROL_ID 10
+#define TABLE_CONTROL_ID 11
 
 std::vector<ListItem> plateDetectionData;
 
@@ -107,6 +108,56 @@ void download_blocklist_cb(Fl_Widget* widget, void* camera_device_ptr) {
     }
 }
 
+// Add new callback function after download_blocklist_cb
+void upload_blocklist_cb(Fl_Widget* widget, void* camera_device_ptr) {
+    CameraDevice* camera_device = (CameraDevice*)camera_device_ptr;
+    
+    if (camera_device->loggedUserId < 0) {
+        ui::MessageDialog::showError("Please connect to camera first");
+        return;
+    }
+
+    // Template file path
+    const char* templateFile = "black_white_list_upload.xls";
+    
+    if (!std::filesystem::exists(templateFile)) {
+        ui::MessageDialog::showError("Template file not found: " + std::string(templateFile));
+        return;
+    }
+    auto uploadHandle = 
+        camera_device->startUploadVehicleBlockAllowList(templateFile);
+    if (uploadHandle != -1) {
+        ui::MessageDialog::show("Started uploading vehicle block list");
+        std::thread uploadStatusMonitor([uploadHandle]() {
+            DWORD uploadProgress = 0; // 0...100 range
+            while (uploadProgress < 100 ) {
+                LONG uploadStatus = NET_DVR_GetUploadState(
+                    uploadHandle, &uploadProgress);
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                if (uploadStatus == 1) {
+                    printf("Upload finished\n");
+                    break;
+                } else if (uploadStatus == 2) {
+                    printf("Upload progress: %d\n", uploadProgress);
+                    
+                } else {
+                    printf("Upload failed with error: %d\n", uploadStatus);
+                    break;
+                }
+            }
+
+        });
+
+        uploadStatusMonitor.detach();
+
+    } else {
+        ui::MessageDialog::showError(
+            "Failed to upload vehicle block list. Error: " + 
+            std::to_string(camera_device->lastError));
+    }
+
+}
+
 int main(int argc, char *argv[]) {
     // Increase window size to accommodate the tableCameraDevice camera_device;
 
@@ -157,9 +208,13 @@ int main(int argc, char *argv[]) {
         camera->disableArming();
     }, &camera_device);
 
-    // Add Download Block List button - add after stop_anpr_btn
+    // Add Download Block List button
     Fl_Button download_blocklist_btn(610, 170, 170, 30, "Download Block List");
     download_blocklist_btn.callback(download_blocklist_cb, &camera_device);
+
+    // Add Upload Block List button - add after download button
+    Fl_Button upload_blocklist_btn(610, 130, 170, 30, "Upload Block List");
+    upload_blocklist_btn.callback(upload_blocklist_cb, &camera_device);
 
     // Add the table
     ImageListTable table(20, 220, 760, 320, "Detection Results");

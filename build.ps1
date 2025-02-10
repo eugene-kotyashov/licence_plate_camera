@@ -122,8 +122,10 @@ $images = @(
     "vehicle.png",
     "plate.png",
     "vehicle.jpg",
-    "plate.jpg"
+    "plate.jpg",
+    "black_white_list_upload.xls"
 )
+
 
 $outputDir = "$BuildDir\bin\$BuildType"
 
