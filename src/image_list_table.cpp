@@ -34,7 +34,7 @@ void ImageListTable::draw_cell(TableContext context, int R, int C, int X, int Y,
     }
     case CONTEXT_COL_HEADER:
     {
-        const char *headers[] = {"No.", "Plate Image", "Plate Text"};
+        const char *headers[] = {"No.", "Capture Time", "Plate Image", "Plate Text"};
         draw_header(X, Y, W, H, headers[C]);
         break;
     }
@@ -84,20 +84,24 @@ void ImageListTable::draw_data(int R, int C, int X, int Y, int W, int H)
 
     switch (C)
     {
-    case 0: // First image
+    case 0: // index
         
         fl_color(FL_BLACK);
         fl_draw(std::to_string(item.index).c_str(), X + MARGIN, Y, W - 2 * MARGIN, H, FL_ALIGN_LEFT | FL_ALIGN_CENTER);
         break;
 
+    case 1: // capture time
+        fl_color(FL_BLACK);
+        fl_draw(item.firstPicTimeStr.c_str(), X + MARGIN, Y, W - 2 * MARGIN, H, FL_ALIGN_LEFT | FL_ALIGN_CENTER);
+        break;
 
-
-    case 1: // Second image
+    case 2: // plate image
         drawImage(X, Y, W, H, MARGIN, IMAGE_SIZE, item.plateImage);
+
         break;
 
 
-    case 2: // Text
+    case 3: // Text
         fl_color(FL_BLACK);
         fl_draw(item.plateText.c_str(), X + MARGIN, Y, W - 2 * MARGIN, H, FL_ALIGN_LEFT | FL_ALIGN_CENTER);
         break;

@@ -15,15 +15,19 @@ struct ListItem {
 
     Fl_Image& plateImage;
     std::string plateText;
+    std::string firstPicTimeStr;
     int index;
-    
-    ListItem( Fl_Image& plateImage, const std::string& plateText, int index) :
+
+
+    ListItem( Fl_Image& plateImage, const std::string& plateText, const std::string& firstPicTimeStr, int index) :
         
         plateImage(plateImage),
         plateText(plateText),
+        firstPicTimeStr(firstPicTimeStr),
         index(index)
     {
     }
+
 
 
 
