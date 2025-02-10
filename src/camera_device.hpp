@@ -108,6 +108,29 @@ struct CameraDevice {
     }
 
 
+    int startDownloadVehicleBlockAllowList() {
+        if (!isSdkInitialized || loggedUserId < 0) {
+            return -1;
+        }
+
+        char *sFileName = "somefile.txt";       
+        
+        int downloadHandle = NET_DVR_StartDownload(
+            loggedUserId,
+            NET_SDK_DOWNLOAD_VEHICLE_BLOCKALLOWLIST_FILE,
+            nullptr,
+            0,
+            sFileName
+        );
+
+        if (downloadHandle < 0) {
+            lastError = NET_DVR_GetLastError();
+        }
+
+        return downloadHandle;
+    }
+
+
     ~CameraDevice() {
         if (isSdkInitialized) {
 

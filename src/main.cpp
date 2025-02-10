@@ -11,10 +11,12 @@
 #include "ui_utils.hpp"
 #include "image_list_table.hpp"
 
+#define TABLE_CONTROL_ID 10
 
 std::vector<ListItem> plateDetectionData;
 
 // Callback function for the OK button
+
 void button_cb(Fl_Widget* widget, void*) {
     widget->window()->hide();
 }
@@ -67,7 +69,8 @@ void configure_anpr_cb(Fl_Widget* widget, void* camera_device_ptr) {
     }
 
     Fl_Window* window = widget->window();
-    ImageListTable* table = (ImageListTable*)window->child(9);
+    ImageListTable* table = (ImageListTable*)window->child(TABLE_CONTROL_ID);
+
 
     camera_device->enableArming(table);
 
@@ -78,15 +81,31 @@ void configure_anpr_cb(Fl_Widget* widget, void* camera_device_ptr) {
 
 void test_jpeg_cb(Fl_Widget* widget, void* camera_device_ptr) { 
     Fl_Window* window = widget->window();
-    ImageListTable* table = (ImageListTable*)window->child(9);
+    ImageListTable* table = (ImageListTable*)window->child(TABLE_CONTROL_ID);
     auto veh = new Fl_JPEG_Image(nullptr, ListItem::LoadJPEGToBuffer("vehicle.jpg"));
     auto plate = new Fl_JPEG_Image(nullptr, ListItem::LoadJPEGToBuffer("plate.jpg"));
+
     ListItem* item = new  ListItem(*veh, *plate, "jpeg nuff");
     table->addItem( *item);
 }
 
+// Add new callback function
+void download_blocklist_cb(Fl_Widget* widget, void* camera_device_ptr) {
+    CameraDevice* camera_device = (CameraDevice*)camera_device_ptr;
+    
+    if (camera_device->loggedUserId < 0) {
+        ui::MessageDialog::showError("Please connect to camera first");
+        return;
+    }
 
-
+    if (camera_device->startDownloadVehicleBlockAllowList()) {
+        ui::MessageDialog::show("Started downloading vehicle block list");
+    } else {
+        ui::MessageDialog::showError(
+            "Failed to start downloading vehicle block list. Error: " + 
+            std::to_string(camera_device->lastError));
+    }
+}
 
 int main(int argc, char *argv[]) {
     // Increase window size to accommodate the tableCameraDevice camera_device;
@@ -131,12 +150,16 @@ int main(int argc, char *argv[]) {
     Fl_Button test_jpeg_btn(250, 170, 170, 30, "Test jpeg buffer");
     test_jpeg_btn.callback(test_jpeg_cb, &camera_device);
 
-    // Add Stop ANPR button - moved to a new position
+    // Add Stop ANPR button
     Fl_Button stop_anpr_btn(430, 170, 170, 30, "Stop ANPR");
     stop_anpr_btn.callback([](Fl_Widget*, void* v) {
         auto* camera = static_cast<CameraDevice*>(v);
         camera->disableArming();
     }, &camera_device);
+
+    // Add Download Block List button - add after stop_anpr_btn
+    Fl_Button download_blocklist_btn(610, 170, 170, 30, "Download Block List");
+    download_blocklist_btn.callback(download_blocklist_cb, &camera_device);
 
     // Add the table
     ImageListTable table(20, 220, 760, 320, "Detection Results");

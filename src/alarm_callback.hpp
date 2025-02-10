@@ -129,15 +129,12 @@ void CALLBACK GetLicencePlatePicsAndText(
             plateImageBuf =
                 (const unsigned char*)struPlateResult.pBuffer1;
         }
-        
 
         addAlarmResultView(
             table,
-             vehicleImageBuf,
-              plateImageBuf,
-               struPlateResult.struPlateInfo.sLicense);
-
-
+            vehicleImageBuf,
+            plateImageBuf,
+            struPlateResult.struPlateInfo.sLicense);
 
         break;
 
