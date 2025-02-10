@@ -11,6 +11,7 @@ void addAlarmResultView(
     const unsigned char *plateImageBuf,
     const std::string &licensePlate)
 
+
 {
     Fl_Image *veh = new Fl_PNG_Image("vehicle.png");   
     Fl_Image *plate = new Fl_PNG_Image("plate.png");
@@ -43,12 +44,13 @@ void addAlarmResultView(
         printf("plate image buffer is nullptr\n");
     }
    
-    ListItem *item = new ListItem(*veh, *plate, licensePlate);
+    ListItem *item = new ListItem(*plate, licensePlate, table->getItemCount());
     Fl::lock();
     printf("table has  %d items\n", table->getItemCount());
     table->addItem(*item);
     Fl::unlock();
     Fl::awake();
+
 }
 
 
@@ -178,16 +180,18 @@ void CALLBACK GetLicencePlatePicsAndText(
 
             {
                 plateImageBuf = struITSPlateResult.struPicInfo[i].pBuffer;
+                addAlarmResultView(
+                table,
+                nullptr,
+                plateImageBuf,
+                struITSPlateResult.struPlateInfo.sLicense);
                 printf("Plate image buffer number %d\n", i);
             }
             
 
-            addAlarmResultView(
-                table,
-                vehicleImageBuf,
-                plateImageBuf,
-                struITSPlateResult.struPlateInfo.sLicense);
+           
             
+
             // Processing other data...
         }
         break;

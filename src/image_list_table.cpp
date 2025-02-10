@@ -34,10 +34,11 @@ void ImageListTable::draw_cell(TableContext context, int R, int C, int X, int Y,
     }
     case CONTEXT_COL_HEADER:
     {
-        const char *headers[] = {"Image 1", "Image 2", "Description"};
+        const char *headers[] = {"No.", "Plate Image", "Plate Text"};
         draw_header(X, Y, W, H, headers[C]);
         break;
     }
+
     default:
         break;
     }
@@ -84,9 +85,11 @@ void ImageListTable::draw_data(int R, int C, int X, int Y, int W, int H)
     switch (C)
     {
     case 0: // First image
-        // Scale image to fit cell height while maintaining aspect ratio
-        drawImage(X, Y, W, H, MARGIN, IMAGE_SIZE, item.vehicleImage);
+        
+        fl_color(FL_BLACK);
+        fl_draw(std::to_string(item.index).c_str(), X + MARGIN, Y, W - 2 * MARGIN, H, FL_ALIGN_LEFT | FL_ALIGN_CENTER);
         break;
+
 
 
     case 1: // Second image

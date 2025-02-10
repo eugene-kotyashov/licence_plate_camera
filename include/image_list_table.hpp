@@ -12,16 +12,19 @@
 
 
 struct ListItem {
-    Fl_Image& vehicleImage;
+
     Fl_Image& plateImage;
     std::string plateText;
+    int index;
     
-    ListItem(Fl_Image& vehicleImage, Fl_Image& plateImage, const std::string& plateText) :
-        vehicleImage(vehicleImage),
+    ListItem( Fl_Image& plateImage, const std::string& plateText, int index) :
+        
         plateImage(plateImage),
-        plateText(plateText)
+        plateText(plateText),
+        index(index)
     {
     }
+
 
 
     static const unsigned char* LoadJPEGToBuffer(const std::string& fileName) {

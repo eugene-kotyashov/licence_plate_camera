@@ -86,7 +86,7 @@ void test_jpeg_cb(Fl_Widget* widget, void* camera_device_ptr) {
     auto veh = new Fl_JPEG_Image(nullptr, ListItem::LoadJPEGToBuffer("vehicle.jpg"));
     auto plate = new Fl_JPEG_Image(nullptr, ListItem::LoadJPEGToBuffer("plate.jpg"));
 
-    ListItem* item = new  ListItem(*veh, *plate, "jpeg nuff");
+    ListItem* item = new  ListItem(*plate, "jpeg nuff", 1);
     table->addItem( *item);
 }
 
@@ -226,12 +226,14 @@ int main(int argc, char *argv[]) {
 	for (int i = 0; i < 1; i++) {
 
 		ListItem item(
-			*vehicleImage,
+	
 			*plateImage,
-			"License Plate: ABC123"
+			"License Plate: ABC123",
+            i
 		);
 		table.addItem(item);
 	}
+
 
     window.end();
     window.show(argc, argv);
