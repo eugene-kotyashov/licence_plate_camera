@@ -19,7 +19,11 @@ struct ListItem {
     int index;
 
 
-    ListItem( Fl_Image& plateImage, const std::string& plateText, const std::string& firstPicTimeStr, int index) :
+    ListItem( 
+        Fl_Image& plateImage,
+        const std::string& plateText,
+        const std::string& firstPicTimeStr,
+     int index) :
         
         plateImage(plateImage),
         plateText(plateText),
@@ -27,8 +31,6 @@ struct ListItem {
         index(index)
     {
     }
-
-
 
 
     static const unsigned char* LoadJPEGToBuffer(const std::string& fileName) {

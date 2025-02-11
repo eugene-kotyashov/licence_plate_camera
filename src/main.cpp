@@ -270,9 +270,8 @@ int main(int argc, char *argv[]) {
 	for (int i = 0; i < 1; i++) {
 
 		ListItem item(
-	
 			*plateImage,
-			"License Plate: ABC123",
+			"ABC123",
             "12:00:00",
             i
 		);

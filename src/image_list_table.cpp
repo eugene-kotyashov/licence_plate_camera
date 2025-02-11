@@ -8,14 +8,15 @@ ImageListTable::ImageListTable(int X, int Y, int W, int H, const char *L)
 
     // Set up the table
     rows(0);
-    cols(3);
+    cols(4);
     col_header(1);
     col_resize(1);
 
     // Set column widths
-    col_width(0, IMAGE_SIZE + 2 * MARGIN);           // First image
-    col_width(1, IMAGE_SIZE + 2 * MARGIN);           // Second image
-    col_width(2, W - 2 * (IMAGE_SIZE + 2 * MARGIN)); // Text
+    col_width(0, 10 + 2 * MARGIN);           // id
+    col_width(1, IMAGE_SIZE + 2 * MARGIN);           // time text
+    col_width(2, 2 *IMAGE_SIZE + 2 * MARGIN); // plate image
+    col_width(3, IMAGE_SIZE + 2 * MARGIN); // plate text
 
     // Set row height
     row_height_all(IMAGE_SIZE + 2 * MARGIN);
@@ -101,7 +102,7 @@ void ImageListTable::draw_data(int R, int C, int X, int Y, int W, int H)
         break;
 
 
-    case 3: // Text
+    case 3: // plate text
         fl_color(FL_BLACK);
         fl_draw(item.plateText.c_str(), X + MARGIN, Y, W - 2 * MARGIN, H, FL_ALIGN_LEFT | FL_ALIGN_CENTER);
         break;
