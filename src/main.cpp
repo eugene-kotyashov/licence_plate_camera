@@ -204,8 +204,15 @@ int main(int argc, char *argv[]) {
     // Add Stop ANPR button
     Fl_Button stop_anpr_btn(430, 170, 170, 30, "Stop ANPR");
     stop_anpr_btn.callback([](Fl_Widget*, void* v) {
-        auto* camera = static_cast<CameraDevice*>(v);
+        CameraDevice* camera = static_cast<CameraDevice*>(v);
         camera->disableArming();
+        if ( camera->lHandle >= 0) {
+            ui::MessageDialog::showError(
+                "Failed to disable ANPR. Error: " + 
+                std::to_string(camera->lastError));
+        } else {
+            ui::MessageDialog::show("ANPR disabled successfully");
+        }
     }, &camera_device);
 
     // Add Download Block List button

@@ -5,6 +5,7 @@
 #include <FL/Fl_JPEG_Image.H>
 #include <cstdio>
 #include <string>
+#include <sstream>
 
 void addAlarmResultView(
     ImageListTable *table,
@@ -13,8 +14,6 @@ void addAlarmResultView(
     const std::string &licensePlate,
     const std::string &firstPicTimeStr
 )
-
-
 
 {
     Fl_Image *veh = new Fl_PNG_Image("vehicle.png");   
@@ -71,91 +70,52 @@ void CALLBACK GetLicencePlatePicsAndText(
     ImageListTable* table = (ImageListTable* )pUser;
     switch (lCommand)
     {
-    case COMM_ALARM:
+    case COMM_VEHICLE_CONTROL_ALARM:
     {
-        NET_DVR_ALARMINFO struAlarmInfo;
-        memcpy(&struAlarmInfo, pAlarmInfo, sizeof(NET_DVR_ALARMINFO));
-        switch (struAlarmInfo.dwAlarmType)
-        {
-        case 3: // Motion detection alarm
-
-            for (i = 0; i < 16; i++) // #define MAX_CHANNUM 16 //The maximum number of channels
-            {
-                if (struAlarmInfo.dwChannel[i] == 1)
-                {
-                    printf("Channel Number with Motion Detection Alarm %d\n", i + 1);
-                }
-            }
-            break;
-        default:
-            break;
-        }
+        NET_DVR_VEHICLE_CONTROL_ALARM struVehicleControlAlarmInfo;
+        printf("Vehicle control alarm\n");
+        memcpy(&struVehicleControlAlarmInfo, pAlarmInfo, sizeof(NET_DVR_VEHICLE_CONTROL_ALARM));
         break;
     }
-    case COMM_UPLOAD_PLATE_RESULT:
-    {
-        NET_DVR_PLATE_RESULT struPlateResult = {0};
-        
-        memcpy(&struPlateResult, pAlarmInfo, sizeof(struPlateResult));
-        printf("License Plate Number: %s\n", struPlateResult.struPlateInfo.sLicense);
-        switch (struPlateResult.struPlateInfo.byColor)                                
-
-        {
-        case VCA_BLUE_PLATE:
-            printf("Vehicle Color: Blue\n");
-            break;
-        case VCA_YELLOW_PLATE:
-            printf("Vehicle Color: Yellow\n");
-            break;
-        case VCA_WHITE_PLATE:
-            printf("Vehicle Color: White\n");
-            break;
-        case VCA_BLACK_PLATE:
-            printf("Vehicle Color: Black\n");
-            break;
-        default:
-            break;
-        }
-        const unsigned char* vehicleImageBuf = nullptr;
-        const unsigned char* plateImageBuf = nullptr;
-        // Scene picture
-        if (struPlateResult.dwPicLen != 0 && struPlateResult.byResultType == 1)
-
-        {
-            printf("Vehicle image buffer %d\n", i);
-            vehicleImageBuf =
-                (const unsigned char*)struPlateResult.pBuffer1;
-
-        }
-
-        // License plate picture
-        if (struPlateResult.dwPicPlateLen != 0 && struPlateResult.byResultType == 1)
-        {
-            printf("plate image buffer %d\n", i);
-            plateImageBuf =
-                (const unsigned char*)struPlateResult.pBuffer1;
-        }
-
-
-        break;
-
-    }
+    
     case COMM_ITS_PLATE_RESULT:
     {
         NET_ITS_PLATE_RESULT struITSPlateResult = {0};
         memcpy(&struITSPlateResult, pAlarmInfo, sizeof(struITSPlateResult));
-        std::string firstPicTimeStr = "" +       
-            std::to_string(struITSPlateResult.struSnapFirstPicTime.wYear) + "-" +
-            std::to_string(struITSPlateResult.struSnapFirstPicTime.byMonth) + "-" +
-            std::to_string(struITSPlateResult.struSnapFirstPicTime.byDay) + " " +
-            std::to_string(struITSPlateResult.struSnapFirstPicTime.byHour) + ":" +
-            std::to_string(struITSPlateResult.struSnapFirstPicTime.byMinute) + ":" +
-            std::to_string(struITSPlateResult.struSnapFirstPicTime.bySecond);
+       
         for (i = 0; i < struITSPlateResult.dwPicNum; i++)
 
         {
             printf("License Plate Number: %s\n", struITSPlateResult.struPlateInfo.sLicense); 
-        
+            BYTE* absTime = struITSPlateResult.struPicInfo[i].byAbsTime;
+            std::stringstream absTimeStr;    
+            // day
+            absTimeStr << absTime[6];
+            absTimeStr << absTime[7];
+            absTimeStr << "-";
+            // month
+            absTimeStr << absTime[4];
+            absTimeStr << absTime[5];
+            absTimeStr << "-";
+            // year
+            absTimeStr << absTime[0];
+            absTimeStr << absTime[1];
+            absTimeStr << absTime[2];
+            absTimeStr << absTime[3];
+            absTimeStr << " ";
+            // hour
+            absTimeStr << absTime[8];
+            absTimeStr << absTime[9];
+            absTimeStr << ":";
+            // minute   
+            absTimeStr << absTime[10];
+            absTimeStr << absTime[11];
+            absTimeStr << ":";
+            // second
+            absTimeStr << absTime[12];
+            absTimeStr << absTime[13];
+            
+            printf("first pic time: %s\n", absTimeStr.str().c_str());
             unsigned char* plateImageBuf = nullptr;
             // License platethumbnails
             if ((struITSPlateResult.struPicInfo[i].dwDataLen != 0) && (struITSPlateResult.struPicInfo[i].byType == 0))
@@ -167,7 +127,7 @@ void CALLBACK GetLicencePlatePicsAndText(
                 nullptr,
                 plateImageBuf,
                 struITSPlateResult.struPlateInfo.sLicense,
-                firstPicTimeStr);
+                absTimeStr.str());
                 printf("Plate image buffer number %d\n", i);
 
             }

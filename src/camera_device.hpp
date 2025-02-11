@@ -100,10 +100,12 @@ struct CameraDevice {
         if (!NET_DVR_CloseAlarmChan_V30(lHandle))
         {
             lastError = NET_DVR_GetLastError();
+            return;
         }
         NET_DVR_SetDVRMessageCallBack_V50(
             0, nullptr, nullptr
         );
+        lHandle = -1;
 
     }
 
