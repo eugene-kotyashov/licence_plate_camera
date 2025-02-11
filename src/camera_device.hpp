@@ -163,7 +163,7 @@ struct CameraDevice {
         struBarrierGateCfg.byBarrierGateCtrl = controlCommand;
         if (NET_DVR_RemoteControl(
             loggedUserId,
-            controlCommand,
+            NET_DVR_BARRIERGATE_CTRL,
             &struBarrierGateCfg,
             sizeof(struBarrierGateCfg)) < 0) {
             
@@ -172,7 +172,12 @@ struct CameraDevice {
         return 0;
     }
 
-
+    int checkDeviceITCAbility (DWORD dwAbility) {
+        if (!isSdkInitialized || loggedUserId < 0) {
+            return -1;
+        }
+        
+    }
 
     ~CameraDevice() {
         if (isSdkInitialized) {

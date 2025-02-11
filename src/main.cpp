@@ -14,7 +14,7 @@
 #include <thread>
 
 
-constexpr int GATE_CHOICE_ID = 12;
+constexpr int GATE_CHOICE_ID = 11;
 constexpr int TABLE_CONTROL_ID = 13;
 
 std::vector<ListItem> plateDetectionData;
@@ -169,7 +169,7 @@ void control_gate_cb(Fl_Widget* widget, void* v) {
     // Get the combo box value
     Fl_Choice* gateChoice = (Fl_Choice*)window->child(GATE_CHOICE_ID);  // Gate control combo box
     int selectedGate = gateChoice->value();
-    
+    printf("selectedGate %d\n", selectedGate);
     if (camera->loggedUserId < 0) {
         ui::MessageDialog::showError("Please connect to camera first");
         return;
