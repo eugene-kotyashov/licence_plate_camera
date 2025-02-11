@@ -175,7 +175,7 @@ void control_gate_cb(Fl_Widget* widget, void* v) {
         return;
     }
     printf("running setBarrierGateControl with command %d\n", selectedGate);
-    if (camera->setBarrierGateControl(selectedGate)) {
+    if (camera->setBarrierGateControl(selectedGate) >= 0) {
         ui::MessageDialog::show("Gate control command sent successfully");
     } else {
         ui::MessageDialog::showError(

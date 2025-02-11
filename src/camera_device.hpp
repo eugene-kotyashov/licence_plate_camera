@@ -78,6 +78,9 @@ struct CameraDevice {
         struSetupParam.byAlarmInfoType = 1;
         // Arming Level: Level-2 arming (for traffic device)
         struSetupParam.byLevel = 1;
+        //  set next field to 0 to receive OMM_ALARM_V30, alarm information
+        // structure: NET_DVR_ALARMINFO_V30
+        struSetupParam.byRetAlarmTypeV40 = 0; 
         lHandle = NET_DVR_SetupAlarmChan_V41(loggedUserId, &struSetupParam);
         if (lHandle < 0)
         {
@@ -165,9 +168,10 @@ struct CameraDevice {
             loggedUserId,
             NET_DVR_BARRIERGATE_CTRL,
             &struBarrierGateCfg,
-            sizeof(struBarrierGateCfg)) < 0) {
+            sizeof(struBarrierGateCfg)) == false) {
             
             lastError = NET_DVR_GetLastError();
+            return -1;
         }
         return 0;
     }
