@@ -19,7 +19,7 @@ if (-not $msbuildPath) {
 }
 
 # Set paths
-$buildDir = "build_release"
+$buildDir = "build"
 $solutionFile = Join-Path $buildDir "fltk_app.sln"
 $outputDir = Join-Path $buildDir  "bin\$BuildConfig"
 $exePath = Join-Path $outputDir "fltk_app.exe"

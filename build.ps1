@@ -57,7 +57,7 @@ Please ensure vcpkg is properly installed. To install:
 }
 
 # Create build directory name based on build type
-$BuildDir = "build_$($BuildType.ToLower())"
+$BuildDir = "build"
 
 # Clean build if requested
 if ($Clean -or $Rebuild) {
