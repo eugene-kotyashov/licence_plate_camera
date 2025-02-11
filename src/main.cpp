@@ -5,6 +5,7 @@
 #include <FL/Fl_Int_Input.H>
 #include <FL/Fl_Secret_Input.H>  // For password field
 #include <FL/Fl_PNG_Image.H>
+#include <FL/Fl_Choice.H>  // For combo box
 #include <filesystem>
 
 #include "camera_device.hpp"
@@ -12,7 +13,9 @@
 #include "image_list_table.hpp"
 #include <thread>
 
-#define TABLE_CONTROL_ID 11
+
+constexpr int GATE_CHOICE_ID = 12;
+constexpr int TABLE_CONTROL_ID = 13;
 
 std::vector<ListItem> plateDetectionData;
 
@@ -158,6 +161,29 @@ void upload_blocklist_cb(Fl_Widget* widget, void* camera_device_ptr) {
 
 }
 
+// Add new callback function
+void control_gate_cb(Fl_Widget* widget, void* v) {
+    auto* window = widget->window();
+    auto* camera = static_cast<CameraDevice*>(v);
+    
+    // Get the combo box value
+    Fl_Choice* gateChoice = (Fl_Choice*)window->child(GATE_CHOICE_ID);  // Gate control combo box
+    int selectedGate = gateChoice->value();
+    
+    if (camera->loggedUserId < 0) {
+        ui::MessageDialog::showError("Please connect to camera first");
+        return;
+    }
+    printf("running setBarrierGateControl with command %d\n", selectedGate);
+    if (camera->setBarrierGateControl(selectedGate)) {
+        ui::MessageDialog::show("Gate control command sent successfully");
+    } else {
+        ui::MessageDialog::showError(
+            "Failed to control gate. Error: " + 
+            std::to_string(camera->lastError));
+    }
+}
+
 int main(int argc, char *argv[]) {
     // Increase window size to accommodate the tableCameraDevice camera_device;
 
@@ -195,14 +221,14 @@ int main(int argc, char *argv[]) {
     disconnect_btn.callback(disconnect_cb, &camera_device);
 
     // Add ANPR Config button
-    Fl_Button anpr_btn(70, 170, 170, 30, "Configure ANPR");
+    Fl_Button anpr_btn(250, 170, 170, 30, "Configure ANPR");
     anpr_btn.callback(configure_anpr_cb, &camera_device);
 
-    Fl_Button test_jpeg_btn(250, 170, 170, 30, "Test jpeg buffer");
+    Fl_Button test_jpeg_btn(430, 170, 170, 30, "Test jpeg buffer");
     test_jpeg_btn.callback(test_jpeg_cb, &camera_device);
 
     // Add Stop ANPR button
-    Fl_Button stop_anpr_btn(430, 170, 170, 30, "Stop ANPR");
+    Fl_Button stop_anpr_btn(610, 170, 170, 30, "Stop ANPR");
     stop_anpr_btn.callback([](Fl_Widget*, void* v) {
         CameraDevice* camera = static_cast<CameraDevice*>(v);
         camera->disableArming();
@@ -216,12 +242,23 @@ int main(int argc, char *argv[]) {
     }, &camera_device);
 
     // Add Download Block List button
-    Fl_Button download_blocklist_btn(610, 170, 170, 30, "Download Block List");
+    Fl_Button download_blocklist_btn(610, 130, 170, 30, "Download Block List");
     download_blocklist_btn.callback(download_blocklist_cb, &camera_device);
 
     // Add Upload Block List button - add after download button
     Fl_Button upload_blocklist_btn(610, 130, 170, 30, "Upload Block List");
     upload_blocklist_btn.callback(upload_blocklist_cb, &camera_device);
+
+    // Add Gate Control combo box and button
+    Fl_Choice* gateChoice = new Fl_Choice(70, 170, 80, 25, "Gate:");
+    gateChoice->add("Close");
+    gateChoice->add("Open");
+    gateChoice->add("Stop");
+    gateChoice->add("Lock");
+    gateChoice->value(0);  // Set default selection
+
+    Fl_Button gate_control_btn(160, 170, 80, 30, "Control");
+    gate_control_btn.callback(control_gate_cb, &camera_device);
 
     // Add the table
     ImageListTable table(20, 220, 760, 320, "Detection Results");

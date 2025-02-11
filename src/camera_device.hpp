@@ -154,6 +154,25 @@ struct CameraDevice {
         return uploadHandle;
     }
 
+    int  setBarrierGateControl(BYTE controlCommand) {
+        if (!isSdkInitialized || loggedUserId < 0) {
+            return -1;
+        }
+        NET_DVR_BARRIERGATE_CFG struBarrierGateCfg = {0};
+        struBarrierGateCfg.dwSize = sizeof(NET_DVR_BARRIERGATE_CFG);
+        struBarrierGateCfg.byBarrierGateCtrl = controlCommand;
+        if (NET_DVR_RemoteControl(
+            loggedUserId,
+            controlCommand,
+            &struBarrierGateCfg,
+            sizeof(struBarrierGateCfg)) < 0) {
+            
+            lastError = NET_DVR_GetLastError();
+        }
+        return 0;
+    }
+
+
 
     ~CameraDevice() {
         if (isSdkInitialized) {
