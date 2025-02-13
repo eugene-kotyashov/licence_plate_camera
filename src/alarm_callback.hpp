@@ -70,21 +70,30 @@ void CALLBACK GetLicencePlatePicsAndText(
     ImageListTable* table = (ImageListTable* )pUser;
     switch (lCommand)
     {
-
+    case COMM_ALARM:
+    {
+        NET_DVR_ALARMINFO struAlarmInfo;
+        printf("Alarm\n");
+        memcpy(&struAlarmInfo, pAlarmInfo, sizeof(NET_DVR_ALARMINFO));
+        break;
+    }
     case COMM_ALARM_V30:
     {
         NET_DVR_ALARMINFO_V30 struAlarmInfoV30;
-        memcpy(&struAlarmInfoV30, pAlarmInfo, sizeof(NET_DVR_ALARMINFO_V30));
         printf("Alarm V30\n");
-        if ((struAlarmInfoV30.dwAlarmType == 0) || (struAlarmInfoV30.dwAlarmType == 23)) {
-            printf("Alarm input number: %d\n", struAlarmInfoV30.dwAlarmInputNumber);
+        break;
+    }
+
+    case COMM_ALARM_V40:
+    {
+        NET_DVR_ALARMINFO_V40 struAlarmInfoV40;
+        memcpy(&struAlarmInfoV40, pAlarmInfo, sizeof(NET_DVR_ALARMINFO_V40));
+        printf("Alarm V40\n");
+        if ((struAlarmInfoV40.struAlarmFixedHeader.dwAlarmType == 0) ||
+         (struAlarmInfoV40.struAlarmFixedHeader.dwAlarmType == 23)) {
+            printf( "Alarm io alarm\n" );
         }
-        BYTE* alarmOutputNumber = struAlarmInfoV30.byAlarmOutputNumber;
-        for (i = 0; i < MAX_ALARMOUT_V30; i++) {
-            if (alarmOutputNumber[i] == 1) {
-                printf("Alarm output number: %d triggered\n", i);
-            }
-        }
+        
         break;
     }
     case COMM_VEHICLE_CONTROL_ALARM:

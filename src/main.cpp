@@ -174,13 +174,8 @@ void control_gate_cb(Fl_Widget* widget, void* v) {
         ui::MessageDialog::showError("Please connect to camera first");
         return;
     }
-    printf("running setBarrierGateControl with command %d\n", selectedGate);
-    if (camera->setBarrierGateControl(selectedGate) >= 0) {
-        ui::MessageDialog::show("Gate control command sent successfully");
-    } else {
-        ui::MessageDialog::showError(
-            "Failed to control gate. Error: " + 
-            std::to_string(camera->lastError));
+    if (camera->getAlarmOutputStatus() < 0) {
+        ui::MessageDialog::showError("Failed to get alarm out status");
     }
 }
 
@@ -253,8 +248,6 @@ int main(int argc, char *argv[]) {
     Fl_Choice* gateChoice = new Fl_Choice(70, 170, 80, 25, "Gate:");
     gateChoice->add("Close");
     gateChoice->add("Open");
-    gateChoice->add("Stop");
-    gateChoice->add("Lock");
     gateChoice->value(0);  // Set default selection
 
     Fl_Button gate_control_btn(160, 170, 80, 30, "Control");

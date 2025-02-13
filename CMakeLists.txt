@@ -8,6 +8,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Find FLTK package
 find_package(FLTK CONFIG REQUIRED)
+find_package(CURL REQUIRED)
 
 # Add executable
 add_executable(${PROJECT_NAME} WIN32
@@ -30,7 +31,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 
 # Link FLTK libraries
 target_link_libraries(${PROJECT_NAME} PRIVATE
-    fltk fltk_gl fltk_forms fltk_images
+    fltk fltk_gl fltk_forms fltk_images CURL::libcurl
 )
 
 # Set Windows subsystem to Windows for GUI application
