@@ -64,9 +64,7 @@ void CALLBACK GetLicencePlatePicsAndText(
     char *pAlarmInfo,
     DWORD dwBufLen,
     void *pUser)
-{
-    int i = 0;
-   
+{   
     ImageListTable* table = (ImageListTable* )pUser;
     switch (lCommand)
     {
@@ -110,7 +108,7 @@ void CALLBACK GetLicencePlatePicsAndText(
         NET_ITS_PLATE_RESULT struITSPlateResult = {0};
         memcpy(&struITSPlateResult, pAlarmInfo, sizeof(struITSPlateResult));
        
-        for (i = 0; i < struITSPlateResult.dwPicNum; i++)
+        for (int i = 0; i < struITSPlateResult.dwPicNum; i++)
 
         {
             printf("License Plate Number: %s\n", struITSPlateResult.struPlateInfo.sLicense); 
