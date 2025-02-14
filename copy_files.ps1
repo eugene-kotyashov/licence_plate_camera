@@ -12,7 +12,8 @@ $requiredDlls = @(
     "bin\zlib1.dll",
     "bin\jpeg62.dll",
     "bin\libpng16.dll",
-    "bin\libcurl.dll"
+    "bin\libcurl.dll",
+    "bin\pugixml.dll"
 )
 
 

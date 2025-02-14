@@ -7,6 +7,7 @@
 #include "image_list_table.hpp"
 
 #include <curl/curl.h>
+#include <pugixml.hpp>
 
 std::size_t write_data(void* buf, std::size_t size, std::size_t nmemb,
     void* userp)
@@ -22,22 +23,22 @@ std::size_t write_data(void* buf, std::size_t size, std::size_t nmemb,
 
 
 // Функция выполнения HTTP-запросов
-bool SendHttpRequest(const std::string& url, const std::string& method) {
+bool SendHttpRequest(
+    const std::string& url,
+    const std::string& method,
+    std::string* data) {
     CURL* curl = curl_easy_init();
     if (!curl) {
         std::cerr << "failed to init curl" << std::endl;
         return false;
     }
 
-    // xml data from requests
-    std::string data;
-
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
     curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, method.c_str());
     curl_easy_setopt(curl, CURLOPT_USERPWD, "admin:Neolink79");
     // curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &data);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, data);
     
     CURLcode res = curl_easy_perform(curl);
     bool result = false;
@@ -49,7 +50,7 @@ bool SendHttpRequest(const std::string& url, const std::string& method) {
         result = true;
     }
 
-    std::cout << data << std::endl;
+    std::cout << *data << std::endl;
 
     curl_easy_cleanup(curl);
     return result;
@@ -57,22 +58,69 @@ bool SendHttpRequest(const std::string& url, const std::string& method) {
 
 bool GetAlarmOutputs(const std::string& CAMERA_IP) {
     std::string url = "http://" + std::string(CAMERA_IP) + "/ISAPI/System/IO/outputs";
-    return SendHttpRequest(url, "GET");
+    std::string res;
+    return SendHttpRequest(url, "GET", &res);
 }
 
 // Проверка статуса выхода №1
-bool GetAlarmOutputStatus(const std::string& CAMERA_IP, int outputID) {
-    std::string url = "http://" + 
-        std::string(CAMERA_IP) + "/ISAPI/System/IO/outputs/" +
-         std::to_string(outputID) + "/status";
-   return SendHttpRequest(url, "GET");
+bool GetAlarmOutputStatus(
+    const std::string &CAMERA_IP,
+    int outputID,
+    BYTE &outputStatus)
+{
+    std::string url = "http://" +
+                      std::string(CAMERA_IP) + "/ISAPI/System/IO/outputs/" +
+                      std::to_string(outputID) + "/status";
+    std::string statusXMLString;
+    bool result =
+        SendHttpRequest(url, "GET", &statusXMLString);
+
+    if (result)
+    {
+        pugi::xml_document doc;
+        // Parse the XML from the string
+        auto parseResult = doc.load_string(statusXMLString.c_str());
+
+        // Check for parsing errors
+        if (!parseResult)
+        {
+            std::cerr << "XML parsed with errors, error description: "
+                      << parseResult.description() << "\n";
+            return false;
+        }
+
+        // Accessing elements and attributes
+        pugi::xml_node root = doc.child("IOPortStatus");
+        std::string statusString;
+        std::cout << "root " << root.name() << std::endl;
+        for (auto child : root.children())
+        {   
+            std::cout << child.name() << std::endl;
+            std::cout << child.text().as_string() << std::endl;
+            if (0 == strcmp(child.name(), "ioState"))
+            {
+                std::cout << "status string " << child.text().as_string() << std::endl;
+                statusString = child.text().as_string();
+                break;
+            }
+        }
+        if (statusString.empty())
+        {
+            std::cerr << "status string not found" << std::endl;
+            return false;
+        }
+        outputStatus = (statusString == "inactive") ? 0 : 1;
+        return true;
+    }
+    return false;
 }
 
 // Активация тревожного выхода №1
 bool TriggerAlarmOutput(const std::string& CAMERA_IP, int outputID) {
     std::string url = "http://" + std::string(CAMERA_IP) + "/ISAPI/System/IO/outputs/" 
     + std::to_string(outputID) + "/trigger";
-    return SendHttpRequest(url, "PUT");
+    std::string res;
+    return SendHttpRequest(url, "PUT", &res);
 }
 
 
@@ -315,23 +363,19 @@ struct CameraDevice
     }
 
     // Функция запроса состояния тревожного выхода
-    int  getAlarmOutputStatus()
+    int  getAlarmOutputStatus(int outputId, BYTE& outputStatus )
     {
-       
-        DWORD dwReturned = 0;
-        
-        BYTE outputStatus[152] = {0};
-        if (!GetAlarmOutputStatus("192.168.0.64", 1)) {
+        if (!GetAlarmOutputStatus("192.168.0.64", outputId, outputStatus)) {
             std::cout << "error getting alarm out status " << std::endl;
             return -1;
         }   
         else
         {
-            std::cout << "alarm out states ";
+            std::cout << "alarm out status ";
             
                 std::cout 
                 << "alarm out : " 
-                << (int)(outputStatus[0]) << std::endl;
+                << (int)outputStatus << std::endl;
         }
         return 0;
     }

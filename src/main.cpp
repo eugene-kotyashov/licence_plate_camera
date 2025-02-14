@@ -174,9 +174,16 @@ void control_gate_cb(Fl_Widget* widget, void* v) {
         ui::MessageDialog::showError("Please connect to camera first");
         return;
     }
-    if (camera->getAlarmOutputStatus() < 0) {
+
+    BYTE outputStatus = -1;
+    if (camera->getAlarmOutputStatus(1, outputStatus) < 0) {
         ui::MessageDialog::showError("Failed to get alarm out status");
     }
+    if (outputStatus < 0 && outputStatus > 1) {
+        ui::MessageDialog::showError(
+            "Got wrong value for alarm out status");
+    }
+    gateChoice->value(outputStatus);
 }
 
 int main(int argc, char *argv[]) {
@@ -245,12 +252,12 @@ int main(int argc, char *argv[]) {
     upload_blocklist_btn.callback(upload_blocklist_cb, &camera_device);
 
     // Add Gate Control combo box and button
-    Fl_Choice* gateChoice = new Fl_Choice(70, 170, 80, 25, "Gate:");
-    gateChoice->add("Close");
-    gateChoice->add("Open");
+    Fl_Choice* gateChoice = new Fl_Choice(70, 170, 80, 25, "Status:");
+    gateChoice->add("0");
+    gateChoice->add("1");
     gateChoice->value(0);  // Set default selection
 
-    Fl_Button gate_control_btn(160, 170, 80, 30, "Control");
+    Fl_Button gate_control_btn(160, 170, 80, 30, "Get Alout");
     gate_control_btn.callback(control_gate_cb, &camera_device);
 
     // Add the table
@@ -259,19 +266,6 @@ int main(int argc, char *argv[]) {
     //if (!item.vehicleImage.fail() && !item.plateImage.fail()) {  // Only add if both images loaded successfully
     Fl_PNG_Image* vehicleImage = new Fl_PNG_Image("vehicle.png");
     Fl_PNG_Image* plateImage = new Fl_PNG_Image("plate.png");
-
-	for (int i = 0; i < 1; i++) {
-
-		ListItem item(
-			*plateImage,
-			"ABC123",
-            "12:00:00",
-            i
-		);
-
-		table.addItem(item);
-	}
-
 
     window.end();
     window.show(argc, argv);
