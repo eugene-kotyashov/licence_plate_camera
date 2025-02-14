@@ -8,6 +8,18 @@
 
 #include <curl/curl.h>
 
+std::size_t write_data(void* buf, std::size_t size, std::size_t nmemb,
+    void* userp)
+{
+    if(auto sp = static_cast<std::string*>(userp))
+    {
+        sp->append(static_cast<char*>(buf), size * nmemb);
+        return size * nmemb;
+    }
+
+    return 0;
+}
+
 
 // Функция выполнения HTTP-запросов
 bool SendHttpRequest(const std::string& url, const std::string& method) {
@@ -17,9 +29,15 @@ bool SendHttpRequest(const std::string& url, const std::string& method) {
         return false;
     }
 
+    // xml data from requests
+    std::string data;
+
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
     curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, method.c_str());
-    curl_easy_setopt(curl, CURLOPT_USERPWD, std::string("admin") + ":" + "Neolink79");
+    curl_easy_setopt(curl, CURLOPT_USERPWD, "admin:Neolink79");
+    // curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &data);
     
     CURLcode res = curl_easy_perform(curl);
     bool result = false;
@@ -30,6 +48,8 @@ bool SendHttpRequest(const std::string& url, const std::string& method) {
         std::cout << "request succeded " << method << " " << url << std::endl;
         result = true;
     }
+
+    std::cout << data << std::endl;
 
     curl_easy_cleanup(curl);
     return result;
@@ -303,6 +323,7 @@ struct CameraDevice
         BYTE outputStatus[152] = {0};
         if (!GetAlarmOutputStatus("192.168.0.64", 1)) {
             std::cout << "error getting alarm out status " << std::endl;
+            return -1;
         }   
         else
         {
@@ -311,8 +332,8 @@ struct CameraDevice
                 std::cout 
                 << "alarm out : " 
                 << (int)(outputStatus[0]) << std::endl;
-            return 0;
         }
+        return 0;
     }
 
     // Функция активации тревожного выхода
