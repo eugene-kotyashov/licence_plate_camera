@@ -76,10 +76,14 @@ void configure_anpr_cb(Fl_Widget* widget, void* camera_device_ptr) {
     ImageListTable* table = (ImageListTable*)window->child(TABLE_CONTROL_ID);
 
 
-    camera_device->enableArming(table);
+    if (camera_device->enableArming(table)) {
 
-
-    ui::MessageDialog::show("ANPR enable successful");
+        ui::MessageDialog::show("ANPR enable successful");
+    } else {
+        ui::MessageDialog::showError(
+            "arming enable error " 
+            + std::to_string(camera_device->lastError));
+    }
 
 }
 
@@ -233,13 +237,13 @@ int main(int argc, char *argv[]) {
     Fl_Button stop_anpr_btn(610, 170, 170, 30, "Stop ANPR");
     stop_anpr_btn.callback([](Fl_Widget*, void* v) {
         CameraDevice* camera = static_cast<CameraDevice*>(v);
-        camera->disableArming();
-        if ( camera->lHandle >= 0) {
+        
+        if ( camera->disableArming()) {
+            ui::MessageDialog::show("ANPR disabled successfully");
+        } else {
             ui::MessageDialog::showError(
                 "Failed to disable ANPR. Error: " + 
                 std::to_string(camera->lastError));
-        } else {
-            ui::MessageDialog::show("ANPR disabled successfully");
         }
     }, &camera_device);
 

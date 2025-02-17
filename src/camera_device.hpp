@@ -92,14 +92,14 @@ bool GetAlarmOutputStatus(
         // Accessing elements and attributes
         pugi::xml_node root = doc.child("IOPortStatus");
         std::string statusString;
-        std::cout << "root " << root.name() << std::endl;
+        // std::cout << "root " << root.name() << std::endl;
         for (auto child : root.children())
         {   
-            std::cout << child.name() << std::endl;
-            std::cout << child.text().as_string() << std::endl;
+            // std::cout << child.name() << std::endl;
+            // std::cout << child.text().as_string() << std::endl;
             if (0 == strcmp(child.name(), "ioState"))
             {
-                std::cout << "status string " << child.text().as_string() << std::endl;
+                // std::cout << "status string " << child.text().as_string() << std::endl;
                 statusString = child.text().as_string();
                 break;
             }
@@ -186,12 +186,13 @@ struct CameraDevice
         loggedUserId = -1;
     }
 
-    void enableArming(void *table)
+    bool enableArming(void *table)
     {
+        lastError = 0;
         if (!isSdkInitialized)
-            return;
+            return false;
         if (loggedUserId < 0)
-            return;
+            return false;
         NET_DVR_SETUPALARM_PARAM_V50 struSetupParamV50 = {0};
         struSetupParamV50.dwSize = sizeof(NET_DVR_SETUPALARM_PARAM_V50);
         // Alarm information type to upload:
@@ -199,7 +200,7 @@ struct CameraDevice
         // (NET_ITS_PLATE_RESULT)
         struSetupParamV50.byAlarmInfoType = 1;
         // Arming Level: Level-2 arming (for traffic device)
-        struSetupParamV50.byLevel = 1;
+        struSetupParamV50.byLevel = 0;
         //  set next field to 0 to receive OMM_ALARM_V30, alarm information
         // structure: NET_DVR_ALARMINFO_V30
         // struSetupParamV50.byRetAlarmTypeV40 = 0;
@@ -214,7 +215,9 @@ struct CameraDevice
         // if (0 == strlen(szSubscribe))
         //{
 
-        lHandle = NET_DVR_SetupAlarmChan_V50(loggedUserId, &struSetupParamV50, NULL, strlen(szSubscribe));
+        lHandle = NET_DVR_SetupAlarmChan_V50(
+            loggedUserId, &struSetupParamV50,
+             NULL, strlen(szSubscribe));
         //}
         /*else
         {
@@ -225,30 +228,34 @@ struct CameraDevice
         if (lHandle < 0)
         {
             lastError = NET_DVR_GetLastError();
-            return;
+            return false;
         }
 
         if (!NET_DVR_SetDVRMessageCallBack_V50(
                 0, GetLicencePlatePicsAndText, table))
         {
             lastError = NET_DVR_GetLastError();
+            return false;
         }
+
+        return true;
     }
 
-    void disableArming()
+    bool disableArming()
     {
         if (!isSdkInitialized)
-            return;
+            return false;
         if (loggedUserId < 0)
-            return;
+            return false;
         if (!NET_DVR_CloseAlarmChan_V30(lHandle))
         {
             lastError = NET_DVR_GetLastError();
-            return;
+            return false;
         }
         NET_DVR_SetDVRMessageCallBack_V50(
             0, nullptr, nullptr);
         lHandle = -1;
+        return true;
     }
 
     int startDownloadVehicleBlockAllowList()

@@ -65,6 +65,7 @@ void CALLBACK GetLicencePlatePicsAndText(
     DWORD dwBufLen,
     void *pUser)
 {   
+    printf("alarm callback called\n");
     ImageListTable* table = (ImageListTable* )pUser;
     switch (lCommand)
     {
