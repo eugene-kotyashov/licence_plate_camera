@@ -4,6 +4,7 @@
 #include <string>
 #include "../incEn/HCNetSDK.h"
 #include "alarm_callback.hpp"
+#include "listen_callback.hpp"
 #include "image_list_table.hpp"
 
 #include <curl/curl.h>
@@ -133,6 +134,7 @@ struct CameraDevice
     int loggedUserId = -1;
     int lastError = 0;
     LONG lHandle = -1;
+    LONG listenHandle = -1;
 
     CameraDevice()
 
@@ -402,6 +404,33 @@ struct CameraDevice
             std::cout << "alarm output " 
             << outputNumber << "activated " << std::endl;
         }
+    }
+
+    bool startListen()
+    {
+        lastError = 0;
+        if (!isSdkInitialized || loggedUserId < 0)
+            return false;
+        if ( (listenHandle = NET_DVR_StartListen_V30(
+            NULL, 7200, ListenCallback, NULL) ) < 0)
+        {
+            lastError = NET_DVR_GetLastError();
+            return false;
+        }
+        return true;
+    }
+
+    bool stopListen()
+    {
+        if (!isSdkInitialized || loggedUserId < 0)
+            return false;
+        if (!NET_DVR_StopListen_V30(listenHandle))
+        {
+            lastError = NET_DVR_GetLastError();
+            return false;
+        }
+        listenHandle = -1;
+        return true;
     }
 
     ~CameraDevice()

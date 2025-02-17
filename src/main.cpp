@@ -15,7 +15,7 @@
 
 
 constexpr int GATE_CHOICE_ID = 11;
-constexpr int TABLE_CONTROL_ID = 13;
+constexpr int TABLE_CONTROL_ID = 15;
 
 std::vector<ListItem> plateDetectionData;
 
@@ -264,12 +264,38 @@ int main(int argc, char *argv[]) {
     Fl_Button gate_control_btn(160, 170, 80, 30, "Get Alout");
     gate_control_btn.callback(control_gate_cb, &camera_device);
 
+    Fl_Button listen_btn(250, 130, 170, 30, "Start Listen");
+    listen_btn.callback([](Fl_Widget*, void* v) {
+        CameraDevice* camera = static_cast<CameraDevice*>(v);
+        if (!camera->startListen()) {
+            ui::MessageDialog::showError(
+                "Failed to start listen. Error: " + 
+                std::to_string(camera->lastError));
+        } else {    
+            ui::MessageDialog::show("Started listening");}
+
+    }, &camera_device);
+
+
+    Fl_Button stop_listen_btn(430, 130, 170, 30, "Stop Listen");
+    stop_listen_btn.callback([](Fl_Widget*, void* v) {
+        CameraDevice* camera = static_cast<CameraDevice*>(v);
+        if (!camera->stopListen()) {        
+            ui::MessageDialog::showError(
+                "Failed to stop listen. Error: " + 
+                std::to_string(camera->lastError)); 
+        } else {
+            ui::MessageDialog::show("Stopped listening");
+        }
+    }, &camera_device);
+
     // Add the table
     ImageListTable table(20, 220, 760, 320, "Detection Results");
     
     //if (!item.vehicleImage.fail() && !item.plateImage.fail()) {  // Only add if both images loaded successfully
     Fl_PNG_Image* vehicleImage = new Fl_PNG_Image("vehicle.png");
     Fl_PNG_Image* plateImage = new Fl_PNG_Image("plate.png");
+
 
     window.end();
     window.show(argc, argv);
