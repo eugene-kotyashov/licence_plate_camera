@@ -25,7 +25,9 @@ ImageListTable::ImageListTable(int X, int Y, int W, int H, const char *L)
 
 }
 
-void ImageListTable::draw_cell(TableContext context, int R, int C, int X, int Y, int W, int H)
+void ImageListTable::draw_cell(
+    TableContext context,
+     int R, int C, int X, int Y, int W, int H)
 {
     switch (context)
     {
@@ -64,15 +66,15 @@ void ImageListTable::draw_header(int X, int Y, int W, int H, const char *title)
 
 
 void drawImage(
-    int X, int Y, int W, int H, int MARGIN, int IMAGE_SIZE, Fl_Image& image)
+    int X, int Y, int W, int H, int MARGIN, int IMAGE_SIZE, Fl_Image* image)
 {
     // Scale image to fit cell height while maintaining aspect ratio
     int img_h = H - 2 * MARGIN;
-    float scale = (float)img_h / image.h();
-    int img_w = image.w() * scale;
+    float scale = (float)img_h / image->h();
+    int img_w = image->w() * scale;
     int img_x = X + (W - img_w) / 2;
     int img_y = Y + MARGIN;
-    image.draw(img_x, img_y, img_w, img_h);
+    image->draw(img_x, img_y, img_w, img_h);
 
 
 }

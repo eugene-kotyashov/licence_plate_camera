@@ -9,30 +9,16 @@
 
 void addAlarmResultView(
     ImageListTable *table,
-    const unsigned char *vehicleImageBuf,
+    
     const unsigned char *plateImageBuf,
+    size_t plateImageBufSize,
     const std::string &licensePlate,
     const std::string &firstPicTimeStr
 )
 
 {
-    Fl_Image *veh = new Fl_PNG_Image("vehicle.png");   
+    
     Fl_Image *plate = new Fl_PNG_Image("plate.png");
-
-    if (vehicleImageBuf != nullptr)
-    {
-        delete veh;
-        veh = new Fl_JPEG_Image(nullptr, vehicleImageBuf);
-        if (veh->fail())
-        {
-            delete veh;
-            printf("Failed to load vehicle image\n");
-            veh = new Fl_PNG_Image("vehicle.png"); 
-        }
-       
-    } else {
-        printf("vehicle image buffer is nullptr\n");
-    }
 
     if (plateImageBuf != nullptr) {
         delete plate;
@@ -46,9 +32,17 @@ void addAlarmResultView(
     } else {
         printf("plate image buffer is nullptr\n");
     }
+
+    unsigned char *plateImageBufCopy = 
+        new unsigned char[plateImageBufSize];
+    memcpy(plateImageBufCopy, plateImageBuf, plateImageBufSize);
    
     ListItem *item = new ListItem(
-        *plate, licensePlate, firstPicTimeStr, table->getItemCount(),
+        plateImageBufCopy,
+         plateImageBufSize,
+          licensePlate,
+           firstPicTimeStr,
+            table->getItemCount(),
         "US", "Forward");
     Fl::lock();
     printf("table has  %d items\n", table->getItemCount());
@@ -152,8 +146,8 @@ void CALLBACK GetLicencePlatePicsAndText(
                 plateImageBuf = struITSPlateResult.struPicInfo[i].pBuffer;
                 addAlarmResultView(
                 table,
-                nullptr,
                 plateImageBuf,
+                struITSPlateResult.struPicInfo[i].dwDataLen,
                 struITSPlateResult.struPlateInfo.sLicense,
                 absTimeStr.str());
                 printf("Plate image buffer number %d\n", i);

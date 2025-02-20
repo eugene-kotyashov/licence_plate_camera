@@ -39,7 +39,9 @@ struct ListItem {
         ", " + FIELD_COUNTRY + ", " + FIELD_MOVE_DIRECTION +
         ") VALUES (?, ?, ?, ?, ?, ?);";
 
-    Fl_Image& plateImage;
+    Fl_Image* plateImage;
+    const unsigned char* plateImageJpgBuffer = nullptr;
+    size_t plateImageBufferSize = 0;
     std::string plateText;
     std::string firstPicTimeStr;
     int index;
@@ -49,32 +51,52 @@ struct ListItem {
 
     ListItem(
         
-        Fl_Image& plateImage,
+        const unsigned char* plateImageBuf,
+        size_t plateImageBufSize,
         const std::string& plateText,
         const std::string& firstPicTimeStr,
         int index,
         const std::string& country,
         const std::string& moveDirection
     ) :
-        
+        plateImageJpgBuffer(plateImageBuf),
+        plateImageBufferSize(plateImageBufSize),
         plateImage(plateImage),
         plateText(plateText),
         firstPicTimeStr(firstPicTimeStr),
         index(index),
         country(country),
         moveDirection(moveDirection)
+       
     {
+        plateImage = new Fl_JPEG_Image(
+            nullptr, plateImageJpgBuffer);
+    }
+    
+    static bool SaveJPEGToFile(
+        const unsigned char* buffer,
+         size_t bufferLen,
+          const std::string& fileName) {
+        FILE *file = fopen(fileName.c_str(), "wb");
+        if (!file) {
+            return false;
+        }
+        
+        fwrite(buffer, 1, bufferLen, file);
+        fclose(file);
+        return true;
     }
 
-
-    static const unsigned char* LoadJPEGToBuffer(const std::string& fileName) {
+    static const unsigned char* LoadJPEGToBuffer(
+        const std::string& fileName, size_t& size) {
+        size = 0;
         FILE *file = fopen(fileName.c_str(), "rb");
         if (!file) {
             return nullptr;
         }
         
         fseek(file, 0, SEEK_END);
-        long size = ftell(file);
+        size = ftell(file);
         fseek(file, 0, SEEK_SET);
 
         unsigned char* buffer = new unsigned char[size];
@@ -91,18 +113,25 @@ bool insertIntoDatabase(sqlite3* db) {
     if (sqlite3_prepare_v2(
         db, SQL_INSERT.c_str(), -1, &stmt, nullptr
     ) != SQLITE_OK) {
-        std::cerr << "Failed to prepare statement: " << sqlite3_errmsg(db) << std::endl;
+        std::cerr 
+        << "Failed to prepare statement: " << SQL_INSERT << 
+        " " << sqlite3_errstr(sqlite3_extended_errcode(db)) << 
+        " " << sqlite3_errmsg(db) << std::endl;
         return false;
     }
 
     // Bind the data to the SQL statement. Assuming plateImage data is stored as binary/blob.
-    char * imageDataPtr = nullptr;
+    unsigned char * imageDataPtr = nullptr;
     size_t imageByteCount = 0;
-    if (plateImage.count() > 0) {
-        imageDataPtr = (char*)plateImage.data();
-        imageByteCount = plateImage.w()*plateImage.h()*plateImage.d();      
+    if (plateImageBufferSize > 0) {
+        ListItem::SaveJPEGToFile(
+            plateImageJpgBuffer, plateImageBufferSize, "jpegBuffer.jpg");
+        std::cout << "plateImage size: " << imageByteCount << std::endl;    
+    } else {
+        std::cout << "plateImage is empty" << std::endl;
     }
-    sqlite3_bind_blob(stmt, 1, imageDataPtr, imageByteCount, SQLITE_TRANSIENT);
+    sqlite3_bind_blob(
+        stmt, 1, plateImageJpgBuffer, plateImageBufferSize, SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, 2, plateText.c_str(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, 3, firstPicTimeStr.c_str(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, 4, index);
@@ -119,10 +148,43 @@ bool insertIntoDatabase(sqlite3* db) {
     return true;
 }
 
+static std::vector<ListItem> loadItemsFromDatabase(sqlite3* db) {
+    std::vector<ListItem> items;
+    sqlite3_stmt* stmt;
+    std::string selectAll = {"SELECT * FROM "};
+    selectAll += std::string(TABLE_NAME);         
+    if (sqlite3_prepare_v2(
+        db, selectAll.c_str(),
+         -1, &stmt, nullptr
+    ) != SQLITE_OK) {
+        std::cerr << 
+        "loadItemsFromDatabase: failed to prepare statement: " 
+        << selectAll << " " << sqlite3_errmsg(db) << std::endl;
+        return items;
+    }
+
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        unsigned char* imageDataPtr = 
+            (unsigned char*)sqlite3_column_blob(stmt, 0);
+        size_t imageByteCount = sqlite3_column_bytes(stmt, 0);          
+        std::string plateText = (const char*)sqlite3_column_text(stmt, 1);  
+        std::string firstPicTimeStr = (const char*)sqlite3_column_text(stmt, 2);        
+        int index = sqlite3_column_int(stmt, 3);        
+        std::string country = (const char*)sqlite3_column_text(stmt, 4);        
+        std::string moveDirection = (const char*)sqlite3_column_text(stmt, 5);        
+        
+        unsigned char* plateImageBuf = new unsigned char[imageByteCount];        
+        memcpy(plateImageBuf, imageDataPtr, imageByteCount);        
+        
+        ListItem item(plateImageBuf, imageByteCount, plateText, firstPicTimeStr, index, country, moveDirection);        
+        items.push_back(item);        
+    }
+
+    sqlite3_finalize(stmt);
+    return items;               
+}
 
 };
-
-
 
 
 class ImageListTable : public Fl_Table_Row {

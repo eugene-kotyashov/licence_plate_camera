@@ -92,12 +92,13 @@ void configure_anpr_cb(Fl_Widget* widget, void* camera_device_ptr) {
 void test_jpeg_cb(Fl_Widget* widget, void* dbPtr) { 
     Fl_Window* window = widget->window();
     ImageListTable* table = (ImageListTable*)window->child(TABLE_CONTROL_ID);
-   
-    auto plate = new Fl_JPEG_Image(nullptr, ListItem::LoadJPEGToBuffer("plate.jpg"));
-
+    size_t bufSize = 0;
+    const unsigned char* buf = 
+        ListItem::LoadJPEGToBuffer("plate.jpg", bufSize);
+    static int recId = 1000;
     ListItem* item = new  ListItem(
-        *plate, "TEST_PLATE", "12:00:00", 1, "forward", "US");
-    sqlite3* db = (sqlite3*)dbPtr;
+        buf, bufSize,  "TEST_PLATE", "12:00:00", recId++, "forward", "US");
+    
     item->insertIntoDatabase(db);
     table->addItem( *item);
 }
@@ -236,7 +237,7 @@ int main(int argc, char *argv[]) {
     anpr_btn.callback(configure_anpr_cb, &camera_device);
 
     Fl_Button test_jpeg_btn(430, 170, 170, 30, "Test jpeg buffer");
-    test_jpeg_btn.callback(test_jpeg_cb, &camera_device);
+    test_jpeg_btn.callback(test_jpeg_cb, nullptr);
 
     // Add Stop ANPR button
     Fl_Button stop_anpr_btn(610, 170, 170, 30, "Stop ANPR");
@@ -333,6 +334,18 @@ int main(int argc, char *argv[]) {
         ui::MessageDialog::showError(
             "Failed to create table in database file. Error: " +
             std::string(sqlite3_errmsg(db)));
+    }
+
+
+    std::vector<ListItem> items =
+        ListItem::loadItemsFromDatabase(db);
+    if (items.empty())
+    {
+        std::cout << "No items found in database." << std::endl;
+    }
+    for (auto& item : items)
+    {
+        table.addItem(item);
     }
 
     if (Fl::lock() != 0)
