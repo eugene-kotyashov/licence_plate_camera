@@ -8,7 +8,7 @@ ImageListTable::ImageListTable(int X, int Y, int W, int H, const char *L)
 
     // Set up the table
     rows(0);
-    cols(4);
+    cols(6);
     col_header(1);
     col_resize(1);
 
@@ -17,6 +17,8 @@ ImageListTable::ImageListTable(int X, int Y, int W, int H, const char *L)
     col_width(1, IMAGE_SIZE + 2 * MARGIN);           // time text
     col_width(2, 2 *IMAGE_SIZE + 2 * MARGIN); // plate image
     col_width(3, IMAGE_SIZE + 2 * MARGIN); // plate text
+    col_width(4, IMAGE_SIZE + 2 * MARGIN);
+    col_width(5, IMAGE_SIZE + 2 * MARGIN);
 
     // Set row height
     row_height_all(IMAGE_SIZE + 2 * MARGIN);
@@ -35,7 +37,13 @@ void ImageListTable::draw_cell(TableContext context, int R, int C, int X, int Y,
     }
     case CONTEXT_COL_HEADER:
     {
-        const char *headers[] = {"No.", "Capture Time", "Plate Image", "Plate Text"};
+        const char *headers[] = {
+            ListItem::FIELD_INDEX,
+             ListItem::FIELD_FIRST_PIC_TIME_STR,
+             ListItem::FIELD_PLATE_IMAGE,
+             ListItem::FIELD_PLATE_TEXT,
+            ListItem::FIELD_COUNTRY,
+             ListItem::FIELD_MOVE_DIRECTION};
         draw_header(X, Y, W, H, headers[C]);
         break;
     }
@@ -88,12 +96,15 @@ void ImageListTable::draw_data(int R, int C, int X, int Y, int W, int H)
     case 0: // index
         
         fl_color(FL_BLACK);
-        fl_draw(std::to_string(item.index).c_str(), X + MARGIN, Y, W - 2 * MARGIN, H, FL_ALIGN_LEFT | FL_ALIGN_CENTER);
+        fl_draw(
+            std::to_string(item.index).c_str(), X + MARGIN,
+             Y, W - 2 * MARGIN, H, FL_ALIGN_LEFT | FL_ALIGN_CENTER);
         break;
-
-    case 1: // capture time
+    case 1: // plate text
         fl_color(FL_BLACK);
-        fl_draw(item.firstPicTimeStr.c_str(), X + MARGIN, Y, W - 2 * MARGIN, H, FL_ALIGN_LEFT | FL_ALIGN_CENTER);
+        fl_draw(
+            item.plateText.c_str(), X + MARGIN,
+             Y, W - 2 * MARGIN, H, FL_ALIGN_LEFT | FL_ALIGN_CENTER);
         break;
 
     case 2: // plate image
@@ -101,10 +112,26 @@ void ImageListTable::draw_data(int R, int C, int X, int Y, int W, int H)
 
         break;
 
-
-    case 3: // plate text
+    case 3: // time text
         fl_color(FL_BLACK);
-        fl_draw(item.plateText.c_str(), X + MARGIN, Y, W - 2 * MARGIN, H, FL_ALIGN_LEFT | FL_ALIGN_CENTER);
+        fl_draw(
+            item.firstPicTimeStr.c_str(), X + MARGIN,
+             Y, W - 2 * MARGIN, H, FL_ALIGN_LEFT | FL_ALIGN_CENTER);
+        break;
+    case 4: // country
+        fl_color(FL_BLACK);
+        fl_draw(
+            item.country.c_str(), X + MARGIN,
+             Y, W - 2 * MARGIN, H, FL_ALIGN_LEFT | FL_ALIGN_CENTER);
+        break;
+    case 5: // move direction
+        fl_color(FL_BLACK);
+        fl_draw(
+            item.moveDirection.c_str(), X + MARGIN,
+             Y, W - 2 * MARGIN, H, FL_ALIGN_LEFT | FL_ALIGN_CENTER);
+        break;
+
+    default:
         break;
 
     }

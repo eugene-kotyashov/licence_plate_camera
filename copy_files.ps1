@@ -9,11 +9,12 @@ Write-Host "`nCopying required DLLs..."
 # Define required DLLs
 $requiredDlls = @(
     
-    "bin\zlib1.dll",
-    "bin\jpeg62.dll",
-    "bin\libpng16.dll",
-    "bin\libcurl.dll",
-    "bin\pugixml.dll"
+    "zlib1.dll",
+    "jpeg62.dll",
+    "libpng16.dll",
+    "libcurl.dll",
+    "pugixml.dll",
+    "sqlite3.dll"
 )
 
 
@@ -56,7 +57,7 @@ foreach ($image in $images) {
 
 # Copy vcpkg DLLs
 foreach ($dll in $requiredDlls) {
-    $sourcePath = Join-Path $buildDir "vcpkg_installed\x64-windows\$dll"
+    $sourcePath = Join-Path $buildDir "vcpkg_installed\x64-windows\bin\$dll"
     if (Test-Path $sourcePath) {
         Copy-Item -Path $sourcePath -Destination $outputDir -Force
         Write-Host "Copied $dll"

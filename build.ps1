@@ -1,5 +1,5 @@
 param(
-    [string]$BuildType = "Release",
+    [string]$BuildConfig = "Release",
     [string]$VcpkgRoot = "$env:VCPKG_ROOT",
     [switch]$Clean,
     [switch]$Rebuild

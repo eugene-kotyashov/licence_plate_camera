@@ -47,7 +47,9 @@ void addAlarmResultView(
         printf("plate image buffer is nullptr\n");
     }
    
-    ListItem *item = new ListItem(*plate, licensePlate, firstPicTimeStr, table->getItemCount());
+    ListItem *item = new ListItem(
+        *plate, licensePlate, firstPicTimeStr, table->getItemCount(),
+        "US", "Forward");
     Fl::lock();
     printf("table has  %d items\n", table->getItemCount());
     table->addItem(*item);

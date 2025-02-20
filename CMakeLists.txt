@@ -9,6 +9,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Find FLTK package
 find_package(FLTK CONFIG REQUIRED)
 find_package(CURL REQUIRED)
+find_package(unofficial-sqlite3 CONFIG REQUIRED)
 find_package(pugixml CONFIG REQUIRED)
 
 # Add executable
@@ -27,14 +28,11 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/lib/HCNetSDK.lib
     ${CMAKE_CURRENT_SOURCE_DIR}/lib/HCCore.lib
     ${CMAKE_CURRENT_SOURCE_DIR}/lib/PlayCtrl.lib
-)
-
-
-# Link FLTK libraries
-target_link_libraries(${PROJECT_NAME} PRIVATE
     fltk fltk_gl fltk_forms fltk_images CURL::libcurl
     pugixml::shared pugixml::pugixml
+    unofficial::sqlite3::sqlite3
 )
+
 
 # Set Windows subsystem to Windows for GUI application
 if(WIN32)

@@ -19,6 +19,8 @@ constexpr int TABLE_CONTROL_ID = 15;
 
 std::vector<ListItem> plateDetectionData;
 
+sqlite3* db = nullptr;
+
 // Callback function for the OK button
 
 void button_cb(Fl_Widget* widget, void*) {
@@ -87,13 +89,16 @@ void configure_anpr_cb(Fl_Widget* widget, void* camera_device_ptr) {
 
 }
 
-void test_jpeg_cb(Fl_Widget* widget, void* camera_device_ptr) { 
+void test_jpeg_cb(Fl_Widget* widget, void* dbPtr) { 
     Fl_Window* window = widget->window();
     ImageListTable* table = (ImageListTable*)window->child(TABLE_CONTROL_ID);
-    auto veh = new Fl_JPEG_Image(nullptr, ListItem::LoadJPEGToBuffer("vehicle.jpg"));
+   
     auto plate = new Fl_JPEG_Image(nullptr, ListItem::LoadJPEGToBuffer("plate.jpg"));
 
-    ListItem* item = new  ListItem(*plate, "jpeg nuff", "12:00:00", 1);
+    ListItem* item = new  ListItem(
+        *plate, "TEST_PLATE", "12:00:00", 1, "forward", "US");
+    sqlite3* db = (sqlite3*)dbPtr;
+    item->insertIntoDatabase(db);
     table->addItem( *item);
 }
 
@@ -299,8 +304,39 @@ int main(int argc, char *argv[]) {
 
     window.end();
     window.show(argc, argv);
-    
-    if (Fl::lock() != 0) {
+
+    int rc = sqlite3_open("plate_detection.db", &db);
+    if (!std::filesystem::exists("plate_detection.db"))
+    {
+        sqlite3 *db_temp;
+        int rc = sqlite3_open("plate_detection.db", &db_temp);
+        if (rc)
+        {
+            ui::MessageDialog::showError(
+                "Failed to create database file. Error: " +
+                std::string(sqlite3_errmsg(db_temp)));
+        }
+        sqlite3_close(db_temp);
+    }
+
+    if (rc)
+    {
+        ui::MessageDialog::showError(
+            "Failed to open database file. Error: " +
+            std::string(sqlite3_errmsg(db)));
+    }
+
+    const char *createTableSql = ListItem::SQL_CREATE_TABLE.data();
+    rc = sqlite3_exec(db, createTableSql, nullptr, nullptr, nullptr);
+    if (rc)
+    {
+        ui::MessageDialog::showError(
+            "Failed to create table in database file. Error: " +
+            std::string(sqlite3_errmsg(db)));
+    }
+
+    if (Fl::lock() != 0)
+    {
         std::cout << "FLTK is not compiled with threading support." << std::endl;
     }
     return Fl::run();

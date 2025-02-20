@@ -75,3 +75,5 @@ build_release/
 build_debug/
 lib/
 sdk_log/
+libxls-1.6.3/
+msysbuildtest/
