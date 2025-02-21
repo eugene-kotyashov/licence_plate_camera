@@ -390,20 +390,14 @@ struct CameraDevice
     }
 
     // Функция активации тревожного выхода
-    void triggerAlarmOutput(int outputNumber)
+    bool triggerAlarmOutput(int outputNumber)
     {
-        if (!NET_DVR_SetAlarmOut(loggedUserId, outputNumber, 1))
+        if (!TriggerAlarmOutput("192.168.0.64", outputNumber))
         {
-            std::cout << 
-            "error setting alarm output: " 
-            << std::endl;
-
+            std::cout << "error getting alarm out status " << std::endl;
+            return false;
         }
-        else
-        {
-            std::cout << "alarm output " 
-            << outputNumber << "activated " << std::endl;
-        }
+        return true;
     }
 
     bool startListen()

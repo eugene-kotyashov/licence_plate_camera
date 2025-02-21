@@ -17,6 +17,8 @@
 constexpr int GATE_CHOICE_ID = 11;
 constexpr int TABLE_CONTROL_ID = 15;
 
+constexpr int OUTPUT_ID = 1;
+
 std::vector<ListItem> plateDetectionData;
 
 
@@ -190,7 +192,7 @@ void control_gate_cb(Fl_Widget* widget, void* v) {
     }
 
     BYTE outputStatus = -1;
-    if (camera->getAlarmOutputStatus(1, outputStatus) < 0) {
+    if (camera->getAlarmOutputStatus(OUTPUT_ID, outputStatus) < 0) {
         ui::MessageDialog::showError("Failed to get alarm out status");
     }
     if (outputStatus < 0 && outputStatus > 1) {
@@ -274,6 +276,16 @@ int main(int argc, char *argv[]) {
     Fl_Button gate_control_btn(160, 170, 80, 30, "Get Alout");
     gate_control_btn.callback(control_gate_cb, &camera_device);
 
+    Fl_Button trigger_alarm_btn(160, 210, 80, 30, "Trigger Alout");
+    trigger_alarm_btn.callback([](Fl_Widget*, void* v) {
+        CameraDevice* camera = static_cast<CameraDevice*>(v);
+        if (!camera->triggerAlarmOutput(OUTPUT_ID)) {
+            ui::MessageDialog::showError(
+                "Failed to trigger alarm output. Error: " + 
+                std::to_string(camera->lastError));
+        }
+    }, &camera_device);
+
     Fl_Button listen_btn(250, 130, 170, 30, "Start Listen");
     listen_btn.callback([](Fl_Widget*, void* v) {
         CameraDevice* camera = static_cast<CameraDevice*>(v);
@@ -300,7 +312,7 @@ int main(int argc, char *argv[]) {
     }, &camera_device);
 
     // Add the table
-    ImageListTable table(20, 220, 760, 320, "Detection Results");
+    ImageListTable table(20, 270, 760, 320, "Detection Results");
     dataView.table = &table;
     //if (!item.vehicleImage.fail() && !item.plateImage.fail()) {  // Only add if both images loaded successfully
     Fl_PNG_Image* vehicleImage = new Fl_PNG_Image("vehicle.png");
