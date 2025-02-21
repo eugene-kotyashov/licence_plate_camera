@@ -19,6 +19,9 @@ constexpr int TABLE_CONTROL_ID = 15;
 
 std::vector<ListItem> plateDetectionData;
 
+
+DBPlustTable dataView;
+
 sqlite3* db = nullptr;
 
 // Callback function for the OK button
@@ -75,6 +78,7 @@ void configure_anpr_cb(Fl_Widget* widget, void* camera_device_ptr) {
     }
 
     Fl_Window* window = widget->window();
+    
     ImageListTable* table = (ImageListTable*)window->child(TABLE_CONTROL_ID);
 
 
@@ -91,7 +95,12 @@ void configure_anpr_cb(Fl_Widget* widget, void* camera_device_ptr) {
 
 void test_jpeg_cb(Fl_Widget* widget, void* dbPtr) { 
     Fl_Window* window = widget->window();
-    ImageListTable* table = (ImageListTable*)window->child(TABLE_CONTROL_ID);
+
+    ImageListTable* table = dataView.table;
+    if (table == nullptr) {
+        std::cerr << "table is null" << std::endl;
+        return;
+    }
     size_t bufSize = 0;
     const unsigned char* buf = 
         ListItem::LoadJPEGToBuffer("plate.jpg", bufSize);
@@ -297,7 +306,7 @@ int main(int argc, char *argv[]) {
 
     // Add the table
     ImageListTable table(20, 220, 760, 320, "Detection Results");
-    
+    dataView.table = &table;
     //if (!item.vehicleImage.fail() && !item.plateImage.fail()) {  // Only add if both images loaded successfully
     Fl_PNG_Image* vehicleImage = new Fl_PNG_Image("vehicle.png");
     Fl_PNG_Image* plateImage = new Fl_PNG_Image("plate.png");
@@ -305,6 +314,7 @@ int main(int argc, char *argv[]) {
 
     window.end();
     window.show(argc, argv);
+
 
     int rc = sqlite3_open("plate_detection.db", &db);
     if (!std::filesystem::exists("plate_detection.db"))
@@ -336,6 +346,7 @@ int main(int argc, char *argv[]) {
             std::string(sqlite3_errmsg(db)));
     }
 
+    dataView.db = db;
 
     std::vector<ListItem> items =
         ListItem::loadItemsFromDatabase(db);

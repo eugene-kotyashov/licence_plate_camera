@@ -2,48 +2,24 @@
 #define ALARM_CALLBACK_HPP
 #include "HCNetSDK.h"
 #include "image_list_table.hpp"
+#include "coutry_strings.hpp"
 #include <FL/Fl_JPEG_Image.H>
 #include <cstdio>
 #include <string>
 #include <sstream>
 
+
+struct DBPlustTable {
+    ImageListTable* table = nullptr;
+    sqlite3* db = nullptr;
+};
+
 void addAlarmResultView(
     ImageListTable *table,
-    
-    const unsigned char *plateImageBuf,
-    size_t plateImageBufSize,
-    const std::string &licensePlate,
-    const std::string &firstPicTimeStr
+    ListItem* item
 )
 
-{
-    
-    Fl_Image *plate = new Fl_PNG_Image("plate.png");
-
-    if (plateImageBuf != nullptr) {
-        delete plate;
-        plate = new Fl_JPEG_Image(nullptr, plateImageBuf);
-        if (plate->fail())
-        {
-            delete plate;
-            printf("Failed to load plate image\n");
-            plate = new Fl_PNG_Image("plate.png");
-        }
-    } else {
-        printf("plate image buffer is nullptr\n");
-    }
-
-    unsigned char *plateImageBufCopy = 
-        new unsigned char[plateImageBufSize];
-    memcpy(plateImageBufCopy, plateImageBuf, plateImageBufSize);
-   
-    ListItem *item = new ListItem(
-        plateImageBufCopy,
-         plateImageBufSize,
-          licensePlate,
-           firstPicTimeStr,
-            table->getItemCount(),
-        "US", "Forward");
+{   
     Fl::lock();
     printf("table has  %d items\n", table->getItemCount());
     table->addItem(*item);
@@ -62,7 +38,7 @@ void CALLBACK GetLicencePlatePicsAndText(
     void *pUser)
 {   
     printf("alarm callback called\n");
-    ImageListTable* table = (ImageListTable* )pUser;
+    
     switch (lCommand)
     {
     case COMM_ALARM:
@@ -143,13 +119,30 @@ void CALLBACK GetLicencePlatePicsAndText(
             if ((struITSPlateResult.struPicInfo[i].dwDataLen != 0) && (struITSPlateResult.struPicInfo[i].byType == 0))
 
             {
+                auto country = struITSPlateResult.struPlateInfo.byCountry;
+                std::string countryStr = countryNames[country];
+                countryStr += "(" + std::to_string(country) + ")";
+
                 plateImageBuf = struITSPlateResult.struPicInfo[i].pBuffer;
-                addAlarmResultView(
-                table,
-                plateImageBuf,
+
+
+                DBPlustTable* dbt = (DBPlustTable*)pUser;
+                ImageListTable* table = dbt->table;
+
+                ListItem* item = ListItem::createListItem(
+                    // TODO: get index from somewere else
+                table->getItemCount(),
+                    plateImageBuf,
                 struITSPlateResult.struPicInfo[i].dwDataLen,
                 struITSPlateResult.struPlateInfo.sLicense,
-                absTimeStr.str());
+                absTimeStr.str(),
+                    countryStr, "direction"
+                );
+
+                
+                addAlarmResultView(
+                    table, item);
+                item->insertIntoDatabase(dbt->db);
                 printf("Plate image buffer number %d\n", i);
 
             }

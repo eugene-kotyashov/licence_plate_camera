@@ -72,6 +72,50 @@ struct ListItem {
         plateImage = new Fl_JPEG_Image(
             nullptr, plateImageJpgBuffer);
     }
+
+
+    static ListItem* createListItem(
+        int itemId,
+        const unsigned char *plateImageBuf,
+        size_t plateImageBufSize,
+        const std::string &licensePlate,
+        const std::string &firstPicTimeStr,
+        const std::string &country,
+        const std::string &moveDirection)
+
+    {
+    
+    Fl_Image *plate = new Fl_PNG_Image("plate.png");
+
+    if (plateImageBuf != nullptr) {
+        delete plate;
+        plate = new Fl_JPEG_Image(nullptr, plateImageBuf);
+        if (plate->fail())
+        {
+            delete plate;
+            printf("Failed to load plate image\n");
+            plate = new Fl_PNG_Image("plate.png");
+        }
+    } else {
+        printf("plate image buffer is nullptr\n");
+    }
+
+    unsigned char *plateImageBufCopy = 
+        new unsigned char[plateImageBufSize];
+    memcpy(plateImageBufCopy, plateImageBuf, plateImageBufSize);
+   
+    ListItem *item = new ListItem(
+        plateImageBufCopy,
+         plateImageBufSize,
+        licensePlate,
+        firstPicTimeStr,
+        itemId,
+        country,
+        moveDirection);
+
+    return item;
+
+    }
     
     static bool SaveJPEGToFile(
         const unsigned char* buffer,
