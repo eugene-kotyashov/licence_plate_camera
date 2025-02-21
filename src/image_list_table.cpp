@@ -110,7 +110,14 @@ void ImageListTable::draw_data(int R, int C, int X, int Y, int W, int H)
         break;
 
     case 2: // plate image
-        drawImage(X, Y, W, H, MARGIN, IMAGE_SIZE, item.plateImage);
+    {
+        int img_h = H - 2 * MARGIN;
+        float scale = static_cast<float>(img_h) / item.plateImage->h();
+        int img_w = item.plateImage->w() * scale;
+        int img_x = X + (W - img_w) / 2;
+        int img_y = Y + MARGIN;
+        item.plateImage->draw(img_x, img_y, img_w, img_h);
+    }
         break;
     case 1: // time text
         drawString(item.firstPicTimeStr.c_str());

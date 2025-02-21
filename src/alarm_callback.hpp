@@ -9,6 +9,19 @@
 #include <sstream>
 
 
+const char* const directionStr[] = {
+    "Unknown",
+    "Up",
+    "Down",
+    "Bi-directional",
+    "Westward",
+    "Northward",
+    "Eastward",
+    "Southward",
+    "Other direction"
+};
+
+
 struct DBPlustTable {
     ImageListTable* table = nullptr;
     sqlite3* db = nullptr;
@@ -124,19 +137,28 @@ void CALLBACK GetLicencePlatePicsAndText(
                 countryStr += "(" + std::to_string(country) + ")";
 
                 plateImageBuf = struITSPlateResult.struPicInfo[i].pBuffer;
-
+                
 
                 DBPlustTable* dbt = (DBPlustTable*)pUser;
                 ImageListTable* table = dbt->table;
-
+                
+                auto direction = struITSPlateResult.byDir;
+                std::string dirStr;
+                if( (direction < 1) || (direction > 8))
+                {
+                    dirStr = "Unknown";
+                } else {
+                    dirStr = directionStr[direction];
+                }
                 ListItem* item = ListItem::createListItem(
                     // TODO: get index from somewere else
-                table->getItemCount(),
+                    table->getItemCount(),
                     plateImageBuf,
-                struITSPlateResult.struPicInfo[i].dwDataLen,
-                struITSPlateResult.struPlateInfo.sLicense,
-                absTimeStr.str(),
-                    countryStr, "direction"
+                    struITSPlateResult.struPicInfo[i].dwDataLen,
+                    struITSPlateResult.struPlateInfo.sLicense,
+                    absTimeStr.str(),
+                    countryStr,
+                    dirStr
                 );
 
                 
