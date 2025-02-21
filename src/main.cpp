@@ -97,7 +97,7 @@ void test_jpeg_cb(Fl_Widget* widget, void* dbPtr) {
         ListItem::LoadJPEGToBuffer("plate.jpg", bufSize);
     static int recId = 1000;
     ListItem* item = new  ListItem(
-        buf, bufSize,  "TEST_PLATE", "12:00:00", recId++, "forward", "US");
+        buf, bufSize,  "TEST_PLATE", "12:00:00", recId++, "US", "forward");
     
     item->insertIntoDatabase(db);
     table->addItem( *item);

@@ -41,7 +41,7 @@ void ImageListTable::draw_cell(
     {
         const char *headers[] = {
             ListItem::FIELD_INDEX,
-             ListItem::FIELD_FIRST_PIC_TIME_STR,
+             "detection time",
              ListItem::FIELD_PLATE_IMAGE,
              ListItem::FIELD_PLATE_TEXT,
             ListItem::FIELD_COUNTRY,
@@ -91,46 +91,35 @@ void ImageListTable::draw_data(int R, int C, int X, int Y, int W, int H)
     fl_color(FL_WHITE);
     fl_rectf(X, Y, W, H);
 
+    auto  drawString = [=](const char* str) {
+        fl_color(FL_BLACK);
+        fl_draw(
+            str, X + MARGIN,
+            Y, W - 2 * MARGIN, H, FL_ALIGN_LEFT | FL_ALIGN_CENTER);
+    };
+
     const ListItem &item = items[R];
 
     switch (C)
     {
     case 0: // index
-        
-        fl_color(FL_BLACK);
-        fl_draw(
-            std::to_string(item.index).c_str(), X + MARGIN,
-             Y, W - 2 * MARGIN, H, FL_ALIGN_LEFT | FL_ALIGN_CENTER);
+        drawString( std::to_string(item.index).c_str());
         break;
-    case 1: // plate text
-        fl_color(FL_BLACK);
-        fl_draw(
-            item.plateText.c_str(), X + MARGIN,
-             Y, W - 2 * MARGIN, H, FL_ALIGN_LEFT | FL_ALIGN_CENTER);
+    case 3: // plate text
+        drawString(item.plateText.c_str());
         break;
 
     case 2: // plate image
         drawImage(X, Y, W, H, MARGIN, IMAGE_SIZE, item.plateImage);
-
         break;
-
-    case 3: // time text
-        fl_color(FL_BLACK);
-        fl_draw(
-            item.firstPicTimeStr.c_str(), X + MARGIN,
-             Y, W - 2 * MARGIN, H, FL_ALIGN_LEFT | FL_ALIGN_CENTER);
+    case 1: // time text
+        drawString(item.firstPicTimeStr.c_str());
         break;
     case 4: // country
-        fl_color(FL_BLACK);
-        fl_draw(
-            item.country.c_str(), X + MARGIN,
-             Y, W - 2 * MARGIN, H, FL_ALIGN_LEFT | FL_ALIGN_CENTER);
+       drawString(item.country.c_str());
         break;
     case 5: // move direction
-        fl_color(FL_BLACK);
-        fl_draw(
-            item.moveDirection.c_str(), X + MARGIN,
-             Y, W - 2 * MARGIN, H, FL_ALIGN_LEFT | FL_ALIGN_CENTER);
+        drawString(item.moveDirection.c_str());
         break;
 
     default:
