@@ -77,12 +77,7 @@ void configure_anpr_cb(Fl_Widget* widget, void* camera_device_ptr) {
         return;
     }
 
-    Fl_Window* window = widget->window();
-    
-    ImageListTable* table = (ImageListTable*)window->child(TABLE_CONTROL_ID);
-
-
-    if (camera_device->enableArming(table)) {
+    if (camera_device->enableArming(&dataView)) {
 
         ui::MessageDialog::show("ANPR enable successful");
     } else {
