@@ -10,6 +10,9 @@
 #include <curl/curl.h>
 #include <pugixml.hpp>
 
+
+#define ISAPI_STATUS_LEN (4096*4)
+
 std::size_t write_data(void* buf, std::size_t size, std::size_t nmemb,
     void* userp)
 {
@@ -425,6 +428,96 @@ struct CameraDevice
         }
         listenHandle = -1;
         return true;
+    }
+
+    bool setTriggerModeForWhiteBlackList()
+    {
+        if (!isSdkInitialized || loggedUserId < 0)
+            return false;
+        NET_DVR_TRIGGER_COND triggerCondition = {0};
+        triggerCondition.dwSize = sizeof(triggerCondition);
+        triggerCondition.dwChannel = 0;
+        // TODO: clarify the meaning of this mode
+        triggerCondition.dwTriggerMode = ITC_POST_SINGLEIO_TYPE;
+        DWORD triggerErrorStatus = 0;
+        NET_ITC_TRIGGERCFG triggerCfg = {0};
+        triggerCfg.dwSize = sizeof(triggerCfg);
+        triggerCfg.struTriggerParam.byEnable = 1;
+        /* TODO: ????
+        triggerCfg.struTriggerParam.dwTriggerType =
+                ITC_POST_SINGLEIO_TYPE;
+        triggerCfg.struTriggerParam.
+            uTriggerParam.struSingleIO.
+            struSingleIO[0].
+        */
+        if (!NET_DVR_SetDeviceConfig(
+                loggedUserId,
+                NET_DVR_SET_TRIGGEREX_CFG,
+                1,
+                &triggerCondition,            
+                sizeof(triggerCondition),
+                &triggerErrorStatus,                   
+                &triggerCfg,
+                sizeof(triggerCfg)                  
+                )) 
+        {
+            lastError = NET_DVR_GetLastError();
+            return false;
+        }
+
+
+        return true;
+    }
+
+    bool getVehicleBlockListShedule()  {
+        if (!isSdkInitialized || loggedUserId < 0)
+            return false;
+        
+        NET_DVR_STD_CONFIG struCfg = {0};
+
+        LONG channel = 0;
+        
+        struCfg.lpCondBuffer = &channel;
+        struCfg.dwCondSize = sizeof(channel);
+        NET_DVR_EVENT_SCHEDULE struOutShedule = {0};
+        struOutShedule.dwSize = sizeof(struOutShedule);
+         
+        struCfg.lpOutBuffer = &struOutShedule;
+        struCfg.dwOutSize = sizeof(struOutShedule);
+
+        char statusBuf[ISAPI_STATUS_LEN] = {0};
+
+        memset(statusBuf, 0, ISAPI_STATUS_LEN);
+        struCfg.lpStatusBuffer = statusBuf;
+        struCfg.dwStatusSize = ISAPI_STATUS_LEN;
+
+        if (!NET_DVR_GetSTDConfig(
+                loggedUserId,
+                NET_DVR_GET_VEHICLE_BLOCKLIST_SCHEDULE,
+                &struCfg)
+            )
+        {
+            std::cerr << "failed to get blocklist schedule" << std::endl;
+            return false;
+        }
+        for (int weekDay = 0; weekDay < 7; weekDay++) {
+            std::cout << "week day " << weekDay << std::endl;
+            for (int schedIntervalIdx = 0; schedIntervalIdx < 8; schedIntervalIdx++) {
+                
+                std::cout << "sched interval " << schedIntervalIdx << std::endl;
+                std::cout << "start hour " <<
+                std::to_string(struOutShedule.struAlarmTime[weekDay][schedIntervalIdx].byStartHour)
+                << " start minute " <<
+                std::to_string(struOutShedule.struAlarmTime[weekDay][schedIntervalIdx].byStartMin)
+                << " end hour " <<
+                std::to_string(struOutShedule.struAlarmTime[weekDay][schedIntervalIdx].byStopHour)
+                << " end minute " <<
+                std::to_string(struOutShedule.struAlarmTime[weekDay][schedIntervalIdx].byStopMin)
+                << std::endl;
+            }
+        }
+        return true;
+
     }
 
     ~CameraDevice()

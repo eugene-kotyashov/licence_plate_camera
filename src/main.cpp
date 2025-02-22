@@ -311,13 +311,25 @@ int main(int argc, char *argv[]) {
         }
     }, &camera_device);
 
+    Fl_Button get_blocklist_schedule_btn(
+        250, 210, 170, 30, "Get Blocklist Schedule");
+    get_blocklist_schedule_btn.callback([](Fl_Widget*, void* v) {
+        CameraDevice* camera = static_cast<CameraDevice*>(v);
+        if (!camera->getVehicleBlockListShedule()) {
+            ui::MessageDialog::showError(
+                "Failed to get block list schedule. Error: " + 
+                std::to_string(camera->lastError));
+        } else {
+            ui::MessageDialog::show("Got block list schedule");
+        }
+    }, &camera_device);
+
     // Add the table
     ImageListTable table(20, 270, 760, 320, "Detection Results");
     dataView.table = &table;
     //if (!item.vehicleImage.fail() && !item.plateImage.fail()) {  // Only add if both images loaded successfully
     Fl_PNG_Image* vehicleImage = new Fl_PNG_Image("vehicle.png");
     Fl_PNG_Image* plateImage = new Fl_PNG_Image("plate.png");
-
 
     window.end();
     window.show(argc, argv);
