@@ -324,6 +324,19 @@ int main(int argc, char *argv[]) {
         }
     }, &camera_device);
 
+    Fl_Button searchLPListAudit_btn(430, 210, 170, 30, "Search LPListAudit");
+    searchLPListAudit_btn.callback([](Fl_Widget*, void* v) {
+        CameraDevice* camera = static_cast<CameraDevice*>(v);
+        std::string searchId;
+        if (!camera->searchLPListAudit(searchId, 0, 10)) {
+            ui::MessageDialog::showError(
+                "Failed to search LPListAudit. Error: " + 
+                std::to_string(camera->lastError));
+        } else {
+            ui::MessageDialog::show("Searched LPListAudit. Search ID: " + searchId);
+        }
+    }, &camera_device);
+
     // Add the table
     ImageListTable table(20, 270, 760, 320, "Detection Results");
     dataView.table = &table;

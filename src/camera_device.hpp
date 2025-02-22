@@ -13,6 +13,9 @@
 
 #define ISAPI_STATUS_LEN (4096*4)
 
+char listAuditInputXML[] =
+     "<LPListAuditSearchDescription version=\"2.0\" xmlns=\"http://www.isapi.org/ver20/XMLSchema\"><searchID></searchID><searchResultPosition></searchResultPosition><maxResults></maxResults><type></type><LicensePlate></LicensePlate><cardNo></cardNo><cardID></cardID></LPListAuditSearchDescription>";
+
 std::size_t write_data(void* buf, std::size_t size, std::size_t nmemb,
     void* userp)
 {
@@ -497,6 +500,7 @@ struct CameraDevice
                 &struCfg)
             )
         {
+            lastError = NET_DVR_GetLastError();
             std::cerr << "failed to get blocklist schedule" << std::endl;
             return false;
         }
@@ -518,6 +522,64 @@ struct CameraDevice
         }
         return true;
 
+    }
+
+    bool searchLPListAudit(std::string &searchId, int startPosition, int maxResults)
+    {
+        if (!isSdkInitialized || loggedUserId < 0)
+            return false;
+        NET_DVR_XML_CONFIG_INPUT reqIn = {0};
+        NET_DVR_XML_CONFIG_OUTPUT reqOut = {0};
+        char url[256] = "POST /ISAPI/Traffic/channels/0/searchLPListAudit";
+        reqIn.dwSize = sizeof(reqIn);
+        reqOut.dwSize = sizeof(reqOut);
+        reqIn.dwRecvTimeOut = 30000;
+        reqIn.lpRequestUrl = url;
+        reqIn.dwRequestUrlLen = strlen(url);
+        DWORD dwInBufferLen = 1024 * 1024;
+        char *pInBuffer = new char[dwInBufferLen];
+        char *pStatusBuffer = new char[dwInBufferLen];
+        memset(pInBuffer, 0, dwInBufferLen);
+        memset(pStatusBuffer, 0, dwInBufferLen);
+
+        auto cleanup = [pInBuffer, pStatusBuffer]()
+        {
+            delete[] pInBuffer;
+            delete[] pStatusBuffer;
+        };
+
+        pugi::xml_document doc;
+        pugi::xml_parse_result result = doc.load_buffer(listAuditInputXML, strlen(listAuditInputXML));
+        if (!result)
+        {
+            std::cerr << "failed to parse xml" << std::endl;
+            cleanup();
+        }
+        auto searchIDNode = doc.child("LPListAuditSearchDescription").child("searchID");
+        searchIDNode.text().set(searchId.c_str());
+
+        auto searchResultPositionNode = doc.child("LPListAuditSearchDescription").child("searchResultPosition");
+        searchResultPositionNode.text().set(std::to_string(startPosition).c_str());
+
+        auto maxResultsNode = doc.child("LPListAuditSearchDescription").child("maxResults");
+        maxResultsNode.text().set(std::to_string(maxResults).c_str());
+
+        memcpy(pInBuffer, listAuditInputXML, strlen(listAuditInputXML));
+        reqIn.lpInBuffer = pInBuffer;
+        reqIn.dwInBufferSize = strlen(listAuditInputXML);
+
+        reqOut.lpStatusBuffer = pStatusBuffer;
+        reqOut.dwStatusSize = dwInBufferLen;
+        if (!NET_DVR_STDXMLConfig(loggedUserId, &reqIn, &reqOut))
+        {
+            lastError = NET_DVR_GetLastError();
+            cleanup();
+            return false;
+        }
+        std::cout << "LP Audit Search Result:" << std::endl;
+        std::cout << reqOut.lpOutBuffer << std::endl;
+        cleanup();
+        return true;
     }
 
     ~CameraDevice()
