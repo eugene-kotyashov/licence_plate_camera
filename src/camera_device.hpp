@@ -16,6 +16,8 @@
 char listAuditInputXML[] =
      "<LPListAuditSearchDescription version=\"2.0\" xmlns=\"http://www.isapi.org/ver20/XMLSchema\"><searchID></searchID><searchResultPosition></searchResultPosition><maxResults></maxResults><type></type><LicensePlate></LicensePlate><cardNo></cardNo><cardID></cardID></LPListAuditSearchDescription>";
 
+const char descItDeviceAbilityXML[] =
+ R"XML(<?xml version="1.0" encoding="utf-8"?><ITDeviceAbility version="2.0"><channelNO></channelNO></ITDeviceAbility>)XML";
 std::size_t write_data(void* buf, std::size_t size, std::size_t nmemb,
     void* userp)
 {
@@ -530,7 +532,7 @@ struct CameraDevice
             return false;
         NET_DVR_XML_CONFIG_INPUT reqIn = {0};
         NET_DVR_XML_CONFIG_OUTPUT reqOut = {0};
-        char url[256] = "POST /ISAPI/Traffic/channels/0/searchLPListAudit";
+        char url[256] = "POST /ISAPI/Traffic/channels/1/searchLPListAudit";
         reqIn.dwSize = sizeof(reqIn);
         reqOut.dwSize = sizeof(reqOut);
         reqIn.dwRecvTimeOut = 30000;
@@ -585,6 +587,61 @@ struct CameraDevice
         }
         std::cout << "LP Audit Search Result:" << std::endl;
         std::cout << reqOut.lpOutBuffer << std::endl;
+        cleanup();
+        return true;
+    }
+
+
+    bool getDeviceITCAbility(int channelNo) {
+        if (!isSdkInitialized || loggedUserId < 0)
+            return false;
+        DWORD dwAbitlityType = DEVICE_ABILITY_INFO;
+    
+        int inBufSize = 512;
+        int outBufSize = 1024*024;
+        char* inBuf = new char[inBufSize];
+        char* outBuf = new char[outBufSize];
+        auto cleanup = [inBuf, outBuf]()
+        {
+            if (inBuf != nullptr )    
+                delete[] inBuf;
+            if (outBuf != nullptr )   
+                delete[] outBuf;
+        };
+
+        pugi::xml_document doc;
+        pugi::xml_parse_result result = 
+        doc.load_buffer(descItDeviceAbilityXML,
+             strlen(descItDeviceAbilityXML));
+        if (result.status !=  pugi::status_ok )
+        {
+            std::cerr << "failed to parse xml" <<
+                 result.description() << std::endl;
+            cleanup();
+        }
+        pugi::xml_node channelNoNode = 
+        doc.child("ITDeviceAbility").child("channelNO");
+        if (channelNoNode)
+        {
+            channelNoNode.text().set(std::to_string(channelNo).c_str());
+        }
+        memset( inBuf, 0, inBufSize);
+        std::stringstream ss;   
+        doc.save(ss);
+        memcpy(inBuf, ss.str().c_str(), ss.str().length());
+
+        std::cout << "DEVICE_ABILITY_INFO request" << std::endl;
+        std::cout << inBuf << std::endl;
+        if (!NET_DVR_GetDeviceAbility(
+            loggedUserId, DEVICE_ABILITY_INFO,
+            inBuf, inBufSize, outBuf, outBufSize
+        )) {
+            lastError = NET_DVR_GetLastError();
+            cleanup();
+            return false;
+        }
+
+        std::cout << outBuf << std::endl;
         cleanup();
         return true;
     }

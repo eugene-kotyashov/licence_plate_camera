@@ -286,30 +286,17 @@ int main(int argc, char *argv[]) {
         }
     }, &camera_device);
 
-    Fl_Button listen_btn(250, 130, 170, 30, "Start Listen");
+    Fl_Button listen_btn(250, 130, 170, 30, "Get ITC ability");
     listen_btn.callback([](Fl_Widget*, void* v) {
         CameraDevice* camera = static_cast<CameraDevice*>(v);
-        if (!camera->startListen()) {
+        if (!camera->getDeviceITCAbility(1)) {
             ui::MessageDialog::showError(
                 "Failed to start listen. Error: " + 
                 std::to_string(camera->lastError));
-        } else {    
-            ui::MessageDialog::show("Started listening");}
-
-    }, &camera_device);
-
-
-    Fl_Button stop_listen_btn(430, 130, 170, 30, "Stop Listen");
-    stop_listen_btn.callback([](Fl_Widget*, void* v) {
-        CameraDevice* camera = static_cast<CameraDevice*>(v);
-        if (!camera->stopListen()) {        
-            ui::MessageDialog::showError(
-                "Failed to stop listen. Error: " + 
-                std::to_string(camera->lastError)); 
-        } else {
-            ui::MessageDialog::show("Stopped listening");
         }
+
     }, &camera_device);
+
 
     Fl_Button get_blocklist_schedule_btn(
         250, 210, 170, 30, "Get Blocklist Schedule");
