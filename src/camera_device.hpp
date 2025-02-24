@@ -595,10 +595,9 @@ struct CameraDevice
     bool getDeviceITCAbility(int channelNo) {
         if (!isSdkInitialized || loggedUserId < 0)
             return false;
-        DWORD dwAbitlityType = DEVICE_ABILITY_INFO;
     
         int inBufSize = 512;
-        int outBufSize = 1024*024;
+        int outBufSize = 1024*1024;
         char* inBuf = new char[inBufSize];
         char* outBuf = new char[outBufSize];
         auto cleanup = [inBuf, outBuf]()
@@ -633,7 +632,8 @@ struct CameraDevice
         std::cout << "DEVICE_ABILITY_INFO request" << std::endl;
         std::cout << inBuf << std::endl;
         if (!NET_DVR_GetDeviceAbility(
-            loggedUserId, DEVICE_ABILITY_INFO,
+            loggedUserId,
+            DEVICE_ABILITY_INFO,
             inBuf, inBufSize, outBuf, outBufSize
         )) {
             lastError = NET_DVR_GetLastError();
@@ -642,6 +642,33 @@ struct CameraDevice
         }
 
         std::cout << outBuf << std::endl;
+        
+
+        char url [256] = "GET /ISAPI/ITC/capability";
+        NET_DVR_XML_CONFIG_INPUT reqIn = {0};
+        NET_DVR_XML_CONFIG_OUTPUT reqOut = {0};
+    
+        reqIn.dwSize = sizeof(reqIn);
+        reqOut.dwSize = sizeof(reqOut);
+        reqIn.dwRecvTimeOut = 30000;
+        reqIn.lpRequestUrl = url;
+        reqIn.dwRequestUrlLen = strlen(url);
+        
+        memset(outBuf, 0, outBufSize);
+        reqOut.lpOutBuffer = outBuf;
+        reqOut.dwOutBufferSize = outBufSize;
+
+        if (!NET_DVR_STDXMLConfig(
+            loggedUserId, &reqIn, &reqOut
+        ) ) {
+            lastError = NET_DVR_GetLastError();
+            cleanup();
+            return false;
+        }
+
+        std::cout << "ITC Cap response" << std::endl;
+        std::cout << reqOut.lpOutBuffer << std::endl;
+
         cleanup();
         return true;
     }
@@ -649,8 +676,9 @@ struct CameraDevice
     ~CameraDevice()
     {
         if (isSdkInitialized)
-        {
-
+        {   
+            if (loggedUserId >= 0)
+                NET_DVR_Logout(loggedUserId);
             NET_DVR_Cleanup();
         }
     }

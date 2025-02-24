@@ -291,7 +291,7 @@ int main(int argc, char *argv[]) {
         CameraDevice* camera = static_cast<CameraDevice*>(v);
         if (!camera->getDeviceITCAbility(1)) {
             ui::MessageDialog::showError(
-                "Failed to start listen. Error: " + 
+                "Failed to get device ITC ability. Error: " + 
                 std::to_string(camera->lastError));
         }
 

@@ -93,7 +93,16 @@ void CALLBACK GetLicencePlatePicsAndText(
     {
         NET_ITS_PLATE_RESULT struITSPlateResult = {0};
         memcpy(&struITSPlateResult, pAlarmInfo, sizeof(struITSPlateResult));
-       
+
+        
+        auto len = struITSPlateResult.struPlateInfo.dwXmlLen;
+        std::cout << "XML plate info length is " << len << std::endl;
+        if (len > 0) {
+            std::cout << struITSPlateResult.struPlateInfo.pXmlBuf << std::endl;
+            std::string tmp(struITSPlateResult.struPlateInfo.pXmlBuf, len);
+            std::cout << tmp << std::endl;
+        }
+
         for (int i = 0; i < struITSPlateResult.dwPicNum; i++)
 
         {
