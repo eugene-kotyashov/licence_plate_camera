@@ -550,9 +550,9 @@ struct CameraDevice
 
         pugi::xml_document doc;
         pugi::xml_parse_result result = doc.load_buffer(listAuditInputXML, strlen(listAuditInputXML));
-        if (!result)
+        if (result.status !=  pugi::status_ok )
         {
-            std::cerr << "failed to parse xml" << std::endl;
+            std::cerr << "failed to parse xml" << result.description() << std::endl;
             cleanup();
         }
         auto searchIDNode = doc.child("LPListAuditSearchDescription").child("searchID");
@@ -564,9 +564,16 @@ struct CameraDevice
         auto maxResultsNode = doc.child("LPListAuditSearchDescription").child("maxResults");
         maxResultsNode.text().set(std::to_string(maxResults).c_str());
 
-        memcpy(pInBuffer, listAuditInputXML, strlen(listAuditInputXML));
+        std::stringstream ss;
+        doc.save(ss);
+        
+        
+       
+        memcpy(pInBuffer, ss.str().c_str(), ss.str().length());
+        std::cout << "listAuditInputXML" << std::endl;
+        std::cout << pInBuffer << std::endl;    
         reqIn.lpInBuffer = pInBuffer;
-        reqIn.dwInBufferSize = strlen(listAuditInputXML);
+        reqIn.dwInBufferSize = ss.str().length();
 
         reqOut.lpStatusBuffer = pStatusBuffer;
         reqOut.dwStatusSize = dwInBufferLen;

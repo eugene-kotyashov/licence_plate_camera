@@ -327,7 +327,7 @@ int main(int argc, char *argv[]) {
     Fl_Button searchLPListAudit_btn(430, 210, 170, 30, "Search LPListAudit");
     searchLPListAudit_btn.callback([](Fl_Widget*, void* v) {
         CameraDevice* camera = static_cast<CameraDevice*>(v);
-        std::string searchId;
+        std::string searchId = "1234";
         if (!camera->searchLPListAudit(searchId, 0, 10)) {
             ui::MessageDialog::showError(
                 "Failed to search LPListAudit. Error: " + 
