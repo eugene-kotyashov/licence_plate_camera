@@ -532,7 +532,7 @@ struct CameraDevice
             return false;
         NET_DVR_XML_CONFIG_INPUT reqIn = {0};
         NET_DVR_XML_CONFIG_OUTPUT reqOut = {0};
-        char url[256] = "POST /ISAPI/Traffic/channels/1/searchLPListAudit";
+        char url[512] = "POST /ISAPI/Traffic/channels/1/searchLPListAudit";
         reqIn.dwSize = sizeof(reqIn);
         reqOut.dwSize = sizeof(reqOut);
         reqIn.dwRecvTimeOut = 30000;
@@ -541,13 +541,16 @@ struct CameraDevice
         DWORD dwInBufferLen = 1024 * 1024;
         char *pInBuffer = new char[dwInBufferLen];
         char *pStatusBuffer = new char[dwInBufferLen];
+        char *pOutBuffer = new char[dwInBufferLen];
         memset(pInBuffer, 0, dwInBufferLen);
         memset(pStatusBuffer, 0, dwInBufferLen);
+        memset(pOutBuffer, 0, dwInBufferLen);
 
-        auto cleanup = [pInBuffer, pStatusBuffer]()
+        auto cleanup = [pInBuffer, pStatusBuffer, pOutBuffer]()
         {
             delete[] pInBuffer;
             delete[] pStatusBuffer;
+            delete [] pOutBuffer;
         };
 
         pugi::xml_document doc;
@@ -568,17 +571,17 @@ struct CameraDevice
 
         std::stringstream ss;
         doc.save(ss);
-        
-        
-       
         memcpy(pInBuffer, ss.str().c_str(), ss.str().length());
         std::cout << "listAuditInputXML" << std::endl;
         std::cout << pInBuffer << std::endl;    
+
         reqIn.lpInBuffer = pInBuffer;
         reqIn.dwInBufferSize = ss.str().length();
 
         reqOut.lpStatusBuffer = pStatusBuffer;
         reqOut.dwStatusSize = dwInBufferLen;
+        reqOut.lpOutBuffer = pOutBuffer;
+        reqOut.dwOutBufferSize = dwInBufferLen;
         if (!NET_DVR_STDXMLConfig(loggedUserId, &reqIn, &reqOut))
         {
             lastError = NET_DVR_GetLastError();
@@ -586,7 +589,7 @@ struct CameraDevice
             return false;
         }
         std::cout << "LP Audit Search Result:" << std::endl;
-        std::cout << reqOut.lpOutBuffer << std::endl;
+        std::cout << (char*)(reqOut.lpOutBuffer) << reqOut.lpOutBuffer << std::endl;
         cleanup();
         return true;
     }
@@ -667,7 +670,7 @@ struct CameraDevice
         }
 
         std::cout << "ITC Cap response" << std::endl;
-        std::cout << reqOut.lpOutBuffer << std::endl;
+        std::cout << reinterpret_cast<char*>(reqOut.lpOutBuffer) << std::endl;
 
         cleanup();
         return true;
