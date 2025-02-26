@@ -8,7 +8,7 @@ ImageListTable::ImageListTable(int X, int Y, int W, int H, const char *L)
 
     // Set up the table
     rows(0);
-    cols(6);
+    cols(7);
     col_header(1);
     col_resize(1);
 
@@ -19,6 +19,7 @@ ImageListTable::ImageListTable(int X, int Y, int W, int H, const char *L)
     col_width(3, IMAGE_SIZE + 2 * MARGIN); // plate text
     col_width(4, IMAGE_SIZE + 2 * MARGIN);
     col_width(5, IMAGE_SIZE + 2 * MARGIN);
+    col_width(6, IMAGE_SIZE + 2 * MARGIN);
 
     // Set row height
     row_height_all(IMAGE_SIZE + 2 * MARGIN);
@@ -45,7 +46,8 @@ void ImageListTable::draw_cell(
              ListItem::FIELD_PLATE_IMAGE,
              ListItem::FIELD_PLATE_TEXT,
             ListItem::FIELD_COUNTRY,
-             ListItem::FIELD_MOVE_DIRECTION};
+             ListItem::FIELD_MOVE_DIRECTION,
+             ListItem::FIELD_PLATE_LIST_TYPE};
         draw_header(X, Y, W, H, headers[C]);
         break;
     }
@@ -127,6 +129,9 @@ void ImageListTable::draw_data(int R, int C, int X, int Y, int W, int H)
         break;
     case 5: // move direction
         drawString(item.moveDirection.c_str());
+        break;
+    case 6: // plate list type
+        drawString(item.plateListType.c_str());
         break;
 
     default:

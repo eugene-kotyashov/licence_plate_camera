@@ -176,12 +176,12 @@ void CALLBACK GetLicencePlatePicsAndText(
                         dirStr = "Unknown";
                 }
                 // 0 - block, 1 - allow, 2 - other
-                int listType = 2;
+                std::string listType = "other list";
                  
                 auto listIt = dbt->abListMap->find(
                     struITSPlateResult.struPlateInfo.sLicense);
                 if (listIt != dbt->abListMap->end() ) {
-                    listType = listIt->second;
+                    listIt->second == 0 ? listType = "block list" : listType = "allow list";
                 }
                 ListItem* item = ListItem::createListItem(
                     // TODO: get index from somewere else
@@ -191,7 +191,8 @@ void CALLBACK GetLicencePlatePicsAndText(
                     struITSPlateResult.struPlateInfo.sLicense,
                     absTimeStr.str(),
                     countryStr,
-                    dirStr
+                    dirStr,
+                    listType
                 );
 
                 

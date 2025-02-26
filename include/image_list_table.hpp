@@ -21,7 +21,7 @@ struct ListItem {
     static auto inline FIELD_INDEX = "idx";
     static auto inline FIELD_COUNTRY = "country";
     static auto inline FIELD_MOVE_DIRECTION = "moveDirection";
-
+    static auto inline FIELD_PLATE_LIST_TYPE = "plateListType";
     
     static std::string inline  SQL_CREATE_TABLE = 
         "CREATE TABLE IF NOT EXISTS " + std::string(TABLE_NAME) + " ("
@@ -30,14 +30,16 @@ struct ListItem {
         + FIELD_FIRST_PIC_TIME_STR + " TEXT, "
         + FIELD_INDEX + " INTEGER, "
         + FIELD_COUNTRY + " TEXT, "
-        + FIELD_MOVE_DIRECTION + " TEXT);";
+        + FIELD_MOVE_DIRECTION + " TEXT," + 
+         FIELD_PLATE_LIST_TYPE + " TEXT);";
 
     static std::string inline SQL_INSERT =
         "INSERT INTO " + std::string(TABLE_NAME) +
         " (" + FIELD_PLATE_IMAGE + ", " + FIELD_PLATE_TEXT +
         ", " + FIELD_FIRST_PIC_TIME_STR + ", " + FIELD_INDEX +
-        ", " + FIELD_COUNTRY + ", " + FIELD_MOVE_DIRECTION +
-        ") VALUES (?, ?, ?, ?, ?, ?);";
+        ", " + FIELD_COUNTRY + ", " + FIELD_MOVE_DIRECTION +        
+        ", " + FIELD_PLATE_LIST_TYPE +          
+        ") VALUES (?, ?, ?, ?, ?, ?, ?);";
 
     Fl_Image* plateImage;
     const unsigned char* plateImageJpgBuffer = nullptr;
@@ -47,6 +49,7 @@ struct ListItem {
     int index;
     std::string country;
     std::string moveDirection;
+    std::string plateListType;
 
 
     ListItem(
@@ -57,7 +60,8 @@ struct ListItem {
         const std::string& firstPicTimeStr,
         int index,
         const std::string& country,
-        const std::string& moveDirection
+        const std::string& moveDirection,
+        const std::string& plateListType
     ) :
         plateImageJpgBuffer(plateImageBuf),
         plateImageBufferSize(plateImageBufSize),
@@ -66,7 +70,8 @@ struct ListItem {
         firstPicTimeStr(firstPicTimeStr),
         index(index),
         country(country),
-        moveDirection(moveDirection)
+        moveDirection(moveDirection),
+        plateListType(plateListType)
        
     {
         plateImage = new Fl_JPEG_Image(
@@ -81,7 +86,8 @@ struct ListItem {
         const std::string &licensePlate,
         const std::string &firstPicTimeStr,
         const std::string &country,
-        const std::string &moveDirection)
+        const std::string &moveDirection,
+        const std::string &plateListType)
 
     {
     
@@ -111,7 +117,8 @@ struct ListItem {
         firstPicTimeStr,
         itemId,
         country,
-        moveDirection);
+        moveDirection,
+        plateListType);
 
     return item;
 
@@ -181,6 +188,7 @@ bool insertIntoDatabase(sqlite3* db) {
     sqlite3_bind_int(stmt, 4, index);
     sqlite3_bind_text(stmt, 5, country.c_str(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, 6, moveDirection.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 7, plateListType.c_str(), -1, SQLITE_TRANSIENT);
 
     if (sqlite3_step(stmt) != SQLITE_DONE) {
         std::cerr << "Failed to execute statement: " << sqlite3_errmsg(db) << std::endl;
@@ -215,12 +223,17 @@ static std::vector<ListItem> loadItemsFromDatabase(sqlite3* db) {
         std::string firstPicTimeStr = (const char*)sqlite3_column_text(stmt, 2);        
         int index = sqlite3_column_int(stmt, 3);        
         std::string country = (const char*)sqlite3_column_text(stmt, 4);        
-        std::string moveDirection = (const char*)sqlite3_column_text(stmt, 5);        
+        std::string moveDirection = (const char*)sqlite3_column_text(stmt, 5);
+        std::string plateListType = (const char*)sqlite3_column_text(stmt, 6);        
         
         unsigned char* plateImageBuf = new unsigned char[imageByteCount];        
         memcpy(plateImageBuf, imageDataPtr, imageByteCount);        
         
-        ListItem item(plateImageBuf, imageByteCount, plateText, firstPicTimeStr, index, country, moveDirection);        
+        ListItem item(
+            plateImageBuf,
+             imageByteCount,
+              plateText, firstPicTimeStr,
+               index, country, moveDirection, plateListType);        
         items.push_back(item);        
     }
 
