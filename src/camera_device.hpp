@@ -9,9 +9,10 @@
 
 #include <curl/curl.h>
 #include <pugixml.hpp>
-
+#include <unordered_map>
 
 #define ISAPI_STATUS_LEN (4096*4)
+
 
 char listAuditInputXML[] =
      "<LPListAuditSearchDescription version=\"2.0\" xmlns=\"http://www.isapi.org/ver20/XMLSchema\"><searchID></searchID><searchResultPosition></searchResultPosition><maxResults></maxResults><type></type><LicensePlate></LicensePlate><cardNo></cardNo><cardID></cardID></LPListAuditSearchDescription>";
@@ -143,6 +144,7 @@ struct CameraDevice
     int lastError = 0;
     LONG lHandle = -1;
     LONG listenHandle = -1;
+    std::unordered_map<std::string, int> blockAllowList;
 
     CameraDevice()
 
@@ -227,7 +229,7 @@ struct CameraDevice
 
         lHandle = NET_DVR_SetupAlarmChan_V50(
             loggedUserId, &struSetupParamV50,
-             NULL, strlen(szSubscribe));
+             szSubscribe, strlen(szSubscribe));
         //}
         /*else
         {
@@ -346,22 +348,22 @@ struct CameraDevice
         }
     }
 
-    int getTriggerConfig()
+    bool getTriggerConfig()
     {
         if (!isSdkInitialized || loggedUserId < 0)
         {
-            return -1;
+            return false;
         }
 
         NET_DVR_TRIGGER_COND struTriggerCond = {0};
         struTriggerCond.dwSize = sizeof(struTriggerCond);
-        struTriggerCond.dwChannel = 0;
-        struTriggerCond.dwTriggerMode = ITC_POST_SINGLEIO_TYPE;
-
+        struTriggerCond.dwChannel = 1;
+        // struTriggerCond.dwTriggerMode = ITC_POST_SINGLEIO_TYPE;
+        struTriggerCond.dwTriggerMode = ITC_POST_MPR_TYPE;
         NET_ITC_TRIGGERCFG struItcTriggerCfg = {0};
         struItcTriggerCfg.dwSize = sizeof(struItcTriggerCfg);
         DWORD dwStatus = 0;
-        BOOL bRet = FALSE;
+    
 
         if (!NET_DVR_GetDeviceConfig(
                 loggedUserId,
@@ -374,9 +376,21 @@ struct CameraDevice
                 sizeof(struItcTriggerCfg)))
         {
             lastError = NET_DVR_GetLastError();
-            return -1;
+            return false;
         }
-        return 0;
+        std::cout << "get trigeer cfg status " << dwStatus << std::endl;
+        std::cout << "trigger cfg content " << std::endl;
+        std::cout << "byEnable " << 
+            (int)struItcTriggerCfg.struTriggerParam.byEnable << std::endl;
+        std::cout << "dwTriggerType " << 
+            struItcTriggerCfg.struTriggerParam.dwTriggerType << std::endl;
+            
+        std::cout << 
+        "struItcTriggerCfg.struTriggerParam.uTriggerParam.struPostMpr.byEnable " <<
+        (int)struItcTriggerCfg.
+        struTriggerParam.uTriggerParam.struPostMpr.byEnable << std::endl;
+        
+        return true;
     }
 
     // Функция запроса состояния тревожного выхода
@@ -674,6 +688,118 @@ struct CameraDevice
 
         cleanup();
         return true;
+    }
+
+    bool loadBlockAllowListCurl(
+        const std::string &CAMERA_IP,
+        int channelID) {
+
+        std::string url = "http://" +
+            std::string(CAMERA_IP) + "/ISAPI/Traffic/channels/" +
+            std::to_string(channelID) + "/searchLPListAudit";
+        std::string resultXMLString;
+        bool result =
+            SendHttpRequest(url, "GET", &resultXMLString);
+        
+        if (!result ) {
+            std::cout << "failed to get LPList info" << std::endl;
+            std::cout << "url: " << url <<std::endl;
+            return false;
+            
+        }
+        // std::cout << resultXMLString << std::endl;
+        pugi::xml_document doc;
+        // Parse the XML from the string
+        auto parseResult = doc.load_string(resultXMLString.c_str());
+
+        // Check for parsing errors
+        if (!parseResult)
+        {
+            std::cerr << "XML parsed with errors, error description: "
+                      << parseResult.description() << "\n";
+            return false;
+        }
+   
+        // Extract LicensePlateInfo node's child nodes from xml
+        auto licensePlateInfo = doc.child("LPListAuditSearchResult");
+        std::cout << "root " << licensePlateInfo.name() << std::endl;
+        blockAllowList.clear();
+        for (auto& node : licensePlateInfo.child("LicensePlateInfoList").children())
+        {   
+            std::cout << "node " << node.name() << std::endl;
+            auto id = node.select_node("id");
+            auto licensePlate = node.select_node("LicensePlate");
+            auto type = node.select_node("type");
+            if (id && licensePlate && type)
+            {
+                std::cout << "id: " << id.node().child_value() << ", "
+                          << "licensePlate: " << licensePlate.node().child_value()
+                          << ", type: " << type.node().child_value() << std::endl;
+                blockAllowList[
+                    licensePlate.node().child_value()] =
+                    (std::string(type.node().child_value()) == "blackList" ? 0 : 1);
+
+            }
+        }
+        return true;
+    }
+
+    bool loadBlockAllowList()
+    {
+        if (!isSdkInitialized || loggedUserId < 0)
+            return false;
+
+        char url[256] = "GET /ISAPI/Traffic/channels/1/searchLPListAudit";
+        NET_DVR_XML_CONFIG_INPUT reqIn = {0};
+        NET_DVR_XML_CONFIG_OUTPUT reqOut = {0};
+
+        int inBufSize = 512;
+        int outBufSize = 1024 * 1024;
+        int statusBufSize = 1024*1024;
+
+        char *inBuf = new char[inBufSize];
+        char *outBuf = new char[outBufSize];
+        char *statusBuf = new char[statusBufSize];
+        auto cleanup = [inBuf, outBuf, statusBuf]()
+        {
+            if (inBuf != nullptr)
+                delete[] inBuf;
+            if (outBuf != nullptr)
+                delete[] outBuf;
+            if (statusBuf != nullptr)
+                delete[] statusBuf;
+        };
+
+        reqIn.dwSize = sizeof(reqIn);
+        reqOut.dwSize = sizeof(reqOut);
+        reqIn.dwRecvTimeOut = 30000;
+        reqIn.lpRequestUrl = url;
+        reqIn.dwRequestUrlLen = strlen(url);
+        reqIn.lpInBuffer = nullptr;
+        reqIn.dwInBufferSize = 0;
+
+        memset(outBuf, 0, outBufSize);
+        reqOut.lpOutBuffer = outBuf;
+        reqOut.dwOutBufferSize = outBufSize;
+        reqOut.lpStatusBuffer = statusBuf;
+        reqOut.dwStatusSize = statusBufSize;
+
+        if (!NET_DVR_STDXMLConfig(
+                loggedUserId, &reqIn, &reqOut))
+        {
+            lastError = NET_DVR_GetLastError();
+            std::cout << "status " << 
+            reinterpret_cast<char *>( reqOut.lpStatusBuffer ) << std::endl;
+            cleanup();
+            return false;
+        }
+
+        std::cout << "Block allow licence plate list data" << std::endl;
+        std::cout << reinterpret_cast<char *>(reqOut.lpOutBuffer) << std::endl;
+
+        cleanup();
+        return true;
+       
     }
 
     ~CameraDevice()

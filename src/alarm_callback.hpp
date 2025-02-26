@@ -4,6 +4,7 @@
 #include "image_list_table.hpp"
 #include "coutry_strings.hpp"
 #include <FL/Fl_JPEG_Image.H>
+#include <unordered_map>
 #include <cstdio>
 #include <string>
 #include <sstream>
@@ -23,9 +24,13 @@ const char* const directionStr[] = {
 
 
 struct DBPlustTable {
+ 
     ImageListTable* table = nullptr;
     sqlite3* db = nullptr;
+    std::unordered_map<std::string, int>* abListMap = nullptr;
 };
+
+
 
 void addAlarmResultView(
     ImageListTable *table,
@@ -54,6 +59,12 @@ void CALLBACK GetLicencePlatePicsAndText(
     
     switch (lCommand)
     {
+    case COMM_ISAPI_ALARM:
+    {
+       
+        printf("Alarm ISAPI\n");
+        break;
+    }
     case COMM_ALARM:
     {
         NET_DVR_ALARMINFO struAlarmInfo;
@@ -96,6 +107,7 @@ void CALLBACK GetLicencePlatePicsAndText(
 
         
         auto len = struITSPlateResult.struPlateInfo.dwXmlLen;
+        
         std::cout << "XML plate info length is " << len << std::endl;
         if (len > 0) {
             std::cout << struITSPlateResult.struPlateInfo.pXmlBuf << std::endl;
@@ -137,8 +149,9 @@ void CALLBACK GetLicencePlatePicsAndText(
             
             printf("first pic time: %s\n", absTimeStr.str().c_str());
             unsigned char* plateImageBuf = nullptr;
-            // License platethumbnails
-            if ((struITSPlateResult.struPicInfo[i].dwDataLen != 0) && (struITSPlateResult.struPicInfo[i].byType == 0))
+            // License plate thumbnails -> byType == 0
+            if ((struITSPlateResult.struPicInfo[i].dwDataLen != 0) && 
+                (struITSPlateResult.struPicInfo[i].byType == 0))
 
             {
                 auto country = struITSPlateResult.struPlateInfo.byCountry;
@@ -150,14 +163,25 @@ void CALLBACK GetLicencePlatePicsAndText(
 
                 DBPlustTable* dbt = (DBPlustTable*)pUser;
                 ImageListTable* table = dbt->table;
-                
-                auto direction = struITSPlateResult.byDir;
                 std::string dirStr;
-                if( (direction < 1) || (direction > 8))
+                switch (struITSPlateResult.struPicInfo[i].byPicRecogMode)
                 {
-                    dirStr = "Unknown";
-                } else {
-                    dirStr = directionStr[direction];
+                    case 0:
+                        dirStr = "Forward";
+                        break;
+                    case 1: 
+                        dirStr = "Backward";
+                        break;
+                    default:
+                        dirStr = "Unknown";
+                }
+                // 0 - block, 1 - allow, 2 - other
+                int listType = 2;
+                 
+                auto listIt = dbt->abListMap->find(
+                    struITSPlateResult.struPlateInfo.sLicense);
+                if (listIt != dbt->abListMap->end() ) {
+                    listType = listIt->second;
                 }
                 ListItem* item = ListItem::createListItem(
                     // TODO: get index from somewere else

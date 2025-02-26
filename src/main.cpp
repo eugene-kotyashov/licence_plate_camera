@@ -324,9 +324,31 @@ int main(int argc, char *argv[]) {
         }
     }, &camera_device);
 
+    Fl_Button get_trigger_config_btn(430, 130, 170, 30, "Get Trigger Config");
+    get_trigger_config_btn.callback([](Fl_Widget*, void* v) {
+        CameraDevice* camera = static_cast<CameraDevice*>(v);
+        if (!camera->getTriggerConfig()) {
+            ui::MessageDialog::showError(
+                "Failed to get trigger config. Error: " + 
+                std::to_string(camera->lastError));
+        }
+    }, &camera_device);
+
+    Fl_Button load_blocklist_btn(610, 210, 170, 30, "Load Block List");
+    load_blocklist_btn.callback([](Fl_Widget*, void* v) {
+        CameraDevice* camera = static_cast<CameraDevice*>(v);
+        if (!camera->loadBlockAllowListCurl("192.168.0.64", 1)) {
+            ui::MessageDialog::showError(
+                "Failed to load block allow list. Error: " + 
+                std::to_string(camera->lastError));
+        }
+    }, &camera_device);
+
+
     // Add the table
     ImageListTable table(20, 270, 760, 320, "Detection Results");
     dataView.table = &table;
+    dataView.abListMap = &(camera_device.blockAllowList);
     //if (!item.vehicleImage.fail() && !item.plateImage.fail()) {  // Only add if both images loaded successfully
     Fl_PNG_Image* vehicleImage = new Fl_PNG_Image("vehicle.png");
     Fl_PNG_Image* plateImage = new Fl_PNG_Image("plate.png");
