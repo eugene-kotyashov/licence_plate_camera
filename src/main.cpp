@@ -80,8 +80,12 @@ void configure_anpr_cb(Fl_Widget* widget, void* camera_device_ptr) {
     }
 
     if (camera_device->enableArming(&dataView)) {
-
+        
         ui::MessageDialog::show("ANPR enable successful");
+        if (!camera_device->loadBlockAllowListCurl("192.168.1.64",1)){
+            std::cout << "failed to load block list" << std::endl;
+        }
+        
     } else {
         ui::MessageDialog::showError(
             "arming enable error " 
