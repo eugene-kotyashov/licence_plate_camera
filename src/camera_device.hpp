@@ -13,12 +13,6 @@
 
 #define ISAPI_STATUS_LEN (4096*4)
 
-
-char listAuditInputXML[] =
-     "<LPListAuditSearchDescription version=\"2.0\" xmlns=\"http://www.isapi.org/ver20/XMLSchema\"><searchID></searchID><searchResultPosition></searchResultPosition><maxResults></maxResults><type></type><LicensePlate></LicensePlate><cardNo></cardNo><cardID></cardID></LPListAuditSearchDescription>";
-
-const char descItDeviceAbilityXML[] =
- R"XML(<?xml version="1.0" encoding="utf-8"?><ITDeviceAbility version="2.0"><channelNO></channelNO></ITDeviceAbility>)XML";
 std::size_t write_data(void* buf, std::size_t size, std::size_t nmemb,
     void* userp)
 {
@@ -31,107 +25,78 @@ std::size_t write_data(void* buf, std::size_t size, std::size_t nmemb,
     return 0;
 }
 
-
-// Функция выполнения HTTP-запросов
-bool SendHttpRequest(
-    const std::string& url,
-    const std::string& method,
-    std::string* data) {
-    CURL* curl = curl_easy_init();
-    if (!curl) {
-        std::cerr << "failed to init curl" << std::endl;
-        return false;
-    }
-
-    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-    curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, method.c_str());
-    curl_easy_setopt(curl, CURLOPT_USERPWD, "admin:Neolink79");
-    // curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, data);
-    
-    CURLcode res = curl_easy_perform(curl);
-    bool result = false;
-    if (res != CURLE_OK) {
-        std::cerr << "failed request: " << curl_easy_strerror(res) << std::endl;
-        result = false;
-    } else {
-        std::cout << "request succeded " << method << " " << url << std::endl;
-        result = true;
-    }
-
-    std::cout << *data << std::endl;
-
-    curl_easy_cleanup(curl);
-    return result;
-}
-
-bool GetAlarmOutputs(const std::string& CAMERA_IP) {
-    std::string url = "http://" + std::string(CAMERA_IP) + "/ISAPI/System/IO/outputs";
-    std::string res;
-    return SendHttpRequest(url, "GET", &res);
-}
-
-// Проверка статуса выхода №1
-bool GetAlarmOutputStatus(
-    const std::string &CAMERA_IP,
-    int outputID,
-    BYTE &outputStatus)
+struct CamLoginInfo
 {
-    std::string url = "http://" +
-                      std::string(CAMERA_IP) + "/ISAPI/System/IO/outputs/" +
-                      std::to_string(outputID) + "/status";
-    std::string statusXMLString;
-    bool result =
-        SendHttpRequest(url, "GET", &statusXMLString);
+    std::string ip;
+    int port;
+    std::string username;
+    std::string password;
 
-    if (result)
+    void setFromUI(
+        Fl_Widget *widget)
     {
-        pugi::xml_document doc;
-        // Parse the XML from the string
-        auto parseResult = doc.load_string(statusXMLString.c_str());
 
-        // Check for parsing errors
-        if (!parseResult)
-        {
-            std::cerr << "XML parsed with errors, error description: "
-                      << parseResult.description() << "\n";
-            return false;
-        }
+        Fl_Window *window = widget->window();
+        Fl_Input *uiIp = (Fl_Input *)window->child(0);
+        Fl_Int_Input *uiPort = (Fl_Int_Input *)window->child(1);
+        Fl_Input *uiUsername = (Fl_Input *)window->child(2);
+        Fl_Secret_Input *uiPassword = (Fl_Secret_Input *)window->child(3);
 
-        // Accessing elements and attributes
-        pugi::xml_node root = doc.child("IOPortStatus");
-        std::string statusString;
-        // std::cout << "root " << root.name() << std::endl;
-        for (auto child : root.children())
-        {   
-            // std::cout << child.name() << std::endl;
-            // std::cout << child.text().as_string() << std::endl;
-            if (0 == strcmp(child.name(), "ioState"))
-            {
-                // std::cout << "status string " << child.text().as_string() << std::endl;
-                statusString = child.text().as_string();
-                break;
-            }
-        }
-        if (statusString.empty())
-        {
-            std::cerr << "status string not found" << std::endl;
-            return false;
-        }
-        outputStatus = (statusString == "inactive") ? 0 : 1;
-        return true;
+        ip = uiIp->value();
+        port = atoi(uiPort->value());
+        username = uiUsername->value();
+        password = uiPassword->value();
     }
-    return false;
-}
 
-// Активация тревожного выхода №1
-bool TriggerAlarmOutput(const std::string& CAMERA_IP, int outputID) {
-    std::string url = "http://" + std::string(CAMERA_IP) + "/ISAPI/System/IO/outputs/" 
-    + std::to_string(outputID) + "/trigger";
-    std::string res;
-    return SendHttpRequest(url, "PUT", &res);
-}
+    // Функция выполнения HTTP-запросов
+    bool SendHttpRequest(
+
+        const std::string &url,
+        const std::string &method,
+        std::string *data)
+    {
+        CURL *curl = curl_easy_init();
+        if (!curl)
+        {
+            std::cerr << "failed to init curl" << std::endl;
+            return false;
+        }
+        std::string auth = username + ":" + password;
+        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+        curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, method.c_str());
+        curl_easy_setopt(curl, CURLOPT_USERPWD, auth.c_str());
+
+        // curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, data);
+
+        CURLcode res = curl_easy_perform(curl);
+        bool result = false;
+        if (res != CURLE_OK)
+        {
+            std::cerr << "failed request: " << curl_easy_strerror(res) << std::endl;
+            result = false;
+        }
+        else
+        {
+            std::cout << "request succeded " << method << " " << url << std::endl;
+            result = true;
+        }
+
+        std::cout << *data << std::endl;
+
+        curl_easy_cleanup(curl);
+        return result;
+    }
+};
+
+char listAuditInputXML[] =
+     "<LPListAuditSearchDescription version=\"2.0\" xmlns=\"http://www.isapi.org/ver20/XMLSchema\"><searchID></searchID><searchResultPosition></searchResultPosition><maxResults></maxResults><type></type><LicensePlate></LicensePlate><cardNo></cardNo><cardID></cardID></LPListAuditSearchDescription>";
+
+const char descItDeviceAbilityXML[] =
+ R"XML(<?xml version="1.0" encoding="utf-8"?><ITDeviceAbility version="2.0"><channelNO></channelNO></ITDeviceAbility>)XML";
+
+
 
 
 struct CameraDevice
@@ -145,6 +110,7 @@ struct CameraDevice
     LONG lHandle = -1;
     LONG listenHandle = -1;
     std::unordered_map<std::string, int> blockAllowList;
+    CamLoginInfo camLoginInfo;
 
     CameraDevice()
 
@@ -156,25 +122,22 @@ struct CameraDevice
         }
     }
 
-    void connect(
-        const std::string &ip,
-        int port,
-        const std::string &username,
-        const std::string &password)
+    void connect()
+        
     {
         NET_DVR_USER_LOGIN_INFO loginInfo = {0};
         NET_DVR_DEVICEINFO_V40 deviceInfoV40 = {0};
         loginInfo.bUseAsynLogin = 0;
         strncpy(
-            loginInfo.sUserName, username.c_str(),
+            loginInfo.sUserName, camLoginInfo.username.c_str(),
             MAX_USERNAME_LENGTH);
 
-        strcpy(loginInfo.sDeviceAddress, ip.c_str());
+        strcpy(loginInfo.sDeviceAddress, camLoginInfo.ip.c_str());
         strncpy(
-            loginInfo.sPassword, password.c_str(),
+            loginInfo.sPassword, camLoginInfo.password.c_str(),
             MAX_PASSWORD_LENGTH);
 
-        loginInfo.wPort = port;
+        loginInfo.wPort = camLoginInfo.port;
         loggedUserId = NET_DVR_Login_V40(
             &loginInfo, &deviceInfoV40);
 
@@ -196,6 +159,74 @@ struct CameraDevice
             return;
         }
         loggedUserId = -1;
+    }
+
+
+    bool GetAlarmOutputs(const std::string& CAMERA_IP) {
+        std::string url = "http://" + std::string(CAMERA_IP) + "/ISAPI/System/IO/outputs";
+        std::string res;
+        return camLoginInfo.SendHttpRequest(url, "GET", &res);
+    }
+    
+    // Проверка статуса выхода №1
+    bool GetAlarmOutputStatus(
+        const std::string &CAMERA_IP,
+        int outputID,
+        BYTE &outputStatus)
+    {
+        std::string url = "http://" +
+                          std::string(CAMERA_IP) + "/ISAPI/System/IO/outputs/" +
+                          std::to_string(outputID) + "/status";
+        std::string statusXMLString;
+        bool result =
+            camLoginInfo.SendHttpRequest(url, "GET", &statusXMLString);
+    
+        if (result)
+        {
+            pugi::xml_document doc;
+            // Parse the XML from the string
+            auto parseResult = doc.load_string(statusXMLString.c_str());
+    
+            // Check for parsing errors
+            if (!parseResult)
+            {
+                std::cerr << "XML parsed with errors, error description: "
+                          << parseResult.description() << "\n";
+                return false;
+            }
+    
+            // Accessing elements and attributes
+            pugi::xml_node root = doc.child("IOPortStatus");
+            std::string statusString;
+            // std::cout << "root " << root.name() << std::endl;
+            for (auto child : root.children())
+            {   
+                // std::cout << child.name() << std::endl;
+                // std::cout << child.text().as_string() << std::endl;
+                if (0 == strcmp(child.name(), "ioState"))
+                {
+                    // std::cout << "status string " << child.text().as_string() << std::endl;
+                    statusString = child.text().as_string();
+                    break;
+                }
+            }
+            if (statusString.empty())
+            {
+                std::cerr << "status string not found" << std::endl;
+                return false;
+            }
+            outputStatus = (statusString == "inactive") ? 0 : 1;
+            return true;
+        }
+        return false;
+    }
+    
+    // Активация тревожного выхода №1
+    bool TriggerAlarmOutput(const std::string& CAMERA_IP, int outputID) {
+        std::string url = "http://" + std::string(CAMERA_IP) + "/ISAPI/System/IO/outputs/" 
+        + std::to_string(outputID) + "/trigger";
+        std::string res;
+        return camLoginInfo.SendHttpRequest(url, "PUT", &res);
     }
 
     bool enableArming(void *table)
@@ -691,15 +722,14 @@ struct CameraDevice
     }
 
     bool loadBlockAllowListCurl(
-        const std::string &CAMERA_IP,
         int channelID) {
 
         std::string url = "http://" +
-            std::string(CAMERA_IP) + "/ISAPI/Traffic/channels/" +
+            camLoginInfo.ip + "/ISAPI/Traffic/channels/" +
             std::to_string(channelID) + "/searchLPListAudit";
         std::string resultXMLString;
         bool result =
-            SendHttpRequest(url, "GET", &resultXMLString);
+            camLoginInfo.SendHttpRequest(url, "GET", &resultXMLString);
         
         if (!result ) {
             std::cout << "failed to get LPList info" << std::endl;

@@ -21,7 +21,6 @@ constexpr int OUTPUT_ID = 1;
 
 std::vector<ListItem> plateDetectionData;
 
-
 DBPlustTable dataView;
 
 sqlite3* db = nullptr;
@@ -35,21 +34,10 @@ void button_cb(Fl_Widget* widget, void*) {
 // Add callback functions for connect and disconnect
 void connect_cb(Fl_Widget* widget, void* camera_device_ptr) {
     // Get the input widget from the window
-    Fl_Window* window = widget->window();
-    Fl_Input* ip = (Fl_Input*)window->child(0);
-    Fl_Int_Input* port = (Fl_Int_Input*)window->child(1);
-    Fl_Input* username = (Fl_Input*)window->child(2);
-    Fl_Secret_Input* password = (Fl_Secret_Input*)window->child(3);
-
-    const char* ip_value = ip->value();
-    int port_value = atoi(port->value());
-    const char* username_value = username->value();
-    const char* password_value = password->value();
-
+   
     CameraDevice* camera_device = (CameraDevice*)camera_device_ptr;
-    camera_device->connect(
-        ip_value, port_value,
-         username_value, password_value);
+    camera_device->camLoginInfo.setFromUI(widget);
+    camera_device->connect();
     if (camera_device->loggedUserId < 0) {
         ui::MessageDialog::showError(
             "Failed to connect to camera " +
@@ -79,12 +67,13 @@ void configure_anpr_cb(Fl_Widget* widget, void* camera_device_ptr) {
         return;
     }
 
+    if (!camera_device->loadBlockAllowListCurl(1)){
+        std::cout << "failed to load block list" << std::endl;
+    }
+
     if (camera_device->enableArming(&dataView)) {
         
         ui::MessageDialog::show("ANPR enable successful");
-        if (!camera_device->loadBlockAllowListCurl("192.168.1.64",1)){
-            std::cout << "failed to load block list" << std::endl;
-        }
         
     } else {
         ui::MessageDialog::showError(
@@ -217,7 +206,8 @@ int main(int argc, char *argv[]) {
         ui::MessageDialog::showError(
             "Failed to initialize camera SDK");
         return  Fl::run();
-    }    
+    }
+
     Fl_Window window(800, 600, "Camera Connection");
     window.begin();
 
@@ -343,7 +333,7 @@ int main(int argc, char *argv[]) {
     Fl_Button load_blocklist_btn(610, 210, 170, 30, "Load Block List");
     load_blocklist_btn.callback([](Fl_Widget*, void* v) {
         CameraDevice* camera = static_cast<CameraDevice*>(v);
-        if (!camera->loadBlockAllowListCurl("192.168.0.64", 1)) {
+        if (!camera->loadBlockAllowListCurl( 1)) {
             ui::MessageDialog::showError(
                 "Failed to load block allow list. Error: " + 
                 std::to_string(camera->lastError));
