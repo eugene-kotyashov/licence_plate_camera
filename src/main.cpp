@@ -256,7 +256,7 @@ int main(int argc, char *argv[]) {
     }, &camera_device);
 
     // Add Download Block List button
-    Fl_Button download_blocklist_btn(610, 130, 170, 30, "Download Block List");
+    Fl_Button download_blocklist_btn(610, 90, 170, 30, "Block list template");
     download_blocklist_btn.callback(download_blocklist_cb, &camera_device);
 
     // Add Upload Block List button - add after download button
