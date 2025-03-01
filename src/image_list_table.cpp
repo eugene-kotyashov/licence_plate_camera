@@ -1,4 +1,5 @@
 #include "image_list_table.hpp"
+#include <Fl/Fl_Shared_Image.H>
 
 #include <iostream>
 
@@ -68,16 +69,28 @@ void ImageListTable::draw_header(int X, int Y, int W, int H, const char *title)
 
 
 void drawImage(
-    int X, int Y, int W, int H, int MARGIN, int IMAGE_SIZE, Fl_Image* image)
+    int X, int Y, int W, int H, int MARGIN, int IMAGE_SIZE, Fl_JPEG_Image* image)
 {
-    // Scale image to fit cell height while maintaining aspect ratio
-    int img_h = H - 2 * MARGIN;
-    float scale = (float)img_h / image->h();
-    int img_w = image->w() * scale;
-    int img_x = X + (W - img_w) / 2;
-    int img_y = Y + MARGIN;
-    image->draw(img_x, img_y, img_w, img_h);
-
+    double imgWHRatio = double(image->w()) / double(image->h());
+    double cellWHRatio = double(W) / double(H);
+    double scale = 1.0;
+    int yoffset = 0;
+    int xoffset = 0;
+    if (imgWHRatio > cellWHRatio) {
+        scale = double(W) / double(image->w()); // fit width
+        yoffset = ceil(0.5*abs(double(H)-scale*double(image->h())));
+    } else { 
+        scale = double(H) / double(image->h()); // fit height
+        xoffset = ceil(0.5*abs(double(W)-scale*double(image->w())));
+    }
+    int img_h = ceil(scale*double(image->h())); 
+    int img_w = ceil(scale*double(image->w()));
+    Fl_Image *rgb = image->copy(img_w, img_h);
+    rgb->draw(X+xoffset, Y+yoffset);
+    
+   
+   
+    // std::cout << "drawing " << shared->w() << " " << shared->h() << ": " << W  <<" " << H  <<" " << std::endl;
 
 }
 
@@ -113,12 +126,7 @@ void ImageListTable::draw_data(int R, int C, int X, int Y, int W, int H)
 
     case 2: // plate image
     {
-        int img_h = H - 2 * MARGIN;
-        float scale = static_cast<float>(img_h) / item.plateImage->h();
-        int img_w = item.plateImage->w() * scale;
-        int img_x = X + (W - img_w) / 2;
-        int img_y = Y + MARGIN;
-        item.plateImage->draw(img_x, img_y, img_w, img_h);
+        drawImage(X, Y, W, H, MARGIN, IMAGE_SIZE, item.plateImage);
     }
         break;
     case 1: // time text

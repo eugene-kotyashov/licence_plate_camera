@@ -4,6 +4,7 @@
 #include <FL/Fl_Image.H>
 #include <FL/Fl_PNG_Image.H>
 #include <FL/Fl_JPEG_Image.H>
+#include <Fl/Fl_Shared_Image.H>
 #include <FL/fl_draw.H>
 #include <vector>
 #include <string>
@@ -41,7 +42,7 @@ struct ListItem {
         ", " + FIELD_PLATE_LIST_TYPE +          
         ") VALUES (?, ?, ?, ?, ?, ?, ?);";
 
-    Fl_Image* plateImage;
+    Fl_JPEG_Image* plateImage;
     const unsigned char* plateImageJpgBuffer = nullptr;
     size_t plateImageBufferSize = 0;
     std::string plateText;
@@ -76,6 +77,11 @@ struct ListItem {
     {
         plateImage = new Fl_JPEG_Image(
             nullptr, plateImageJpgBuffer);
+        if (!plateImage->fail()) {
+            std::cout << "plate image loaded" <<
+             " w " << plateImage->w() << " h " <<
+              plateImage->h()    << std::endl;
+        }
     }
 
 
@@ -91,28 +97,21 @@ struct ListItem {
 
     {
     
-    Fl_Image *plate = new Fl_PNG_Image("plate.png");
-
+    
+    unsigned char *plateImageBufCopy = nullptr;
+        new unsigned char[plateImageBufSize];
     if (plateImageBuf != nullptr) {
-        delete plate;
-        plate = new Fl_JPEG_Image(nullptr, plateImageBuf);
-        if (plate->fail())
-        {
-            delete plate;
-            printf("Failed to load plate image\n");
-            plate = new Fl_PNG_Image("plate.png");
-        }
+        plateImageBufCopy = new unsigned char[plateImageBufSize];
+        memcpy(plateImageBufCopy, plateImageBuf, plateImageBufSize);
     } else {
         printf("plate image buffer is nullptr\n");
+        plateImageBufCopy = 
+            const_cast<unsigned char*>(LoadJPEGToBuffer("plate.jpg", plateImageBufSize));
     }
-
-    unsigned char *plateImageBufCopy = 
-        new unsigned char[plateImageBufSize];
-    memcpy(plateImageBufCopy, plateImageBuf, plateImageBufSize);
    
     ListItem *item = new ListItem(
         plateImageBufCopy,
-         plateImageBufSize,
+        plateImageBufSize,
         licensePlate,
         firstPicTimeStr,
         itemId,
@@ -172,12 +171,11 @@ bool insertIntoDatabase(sqlite3* db) {
     }
 
     // Bind the data to the SQL statement. Assuming plateImage data is stored as binary/blob.
-    unsigned char * imageDataPtr = nullptr;
-    size_t imageByteCount = 0;
+    
     if (plateImageBufferSize > 0) {
         ListItem::SaveJPEGToFile(
             plateImageJpgBuffer, plateImageBufferSize, "jpegBuffer.jpg");
-        std::cout << "plateImage size: " << imageByteCount << std::endl;    
+        std::cout << "plateImage size: " << plateImageBufferSize << std::endl;    
     } else {
         std::cout << "plateImage is empty" << std::endl;
     }
@@ -218,7 +216,8 @@ static std::vector<ListItem> loadItemsFromDatabase(sqlite3* db) {
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         unsigned char* imageDataPtr = 
             (unsigned char*)sqlite3_column_blob(stmt, 0);
-        size_t imageByteCount = sqlite3_column_bytes(stmt, 0);          
+        size_t imageByteCount = sqlite3_column_bytes(stmt, 0);    
+        std::cout << "loaded image byte count: " << imageByteCount << std::endl; 
         std::string plateText = (const char*)sqlite3_column_text(stmt, 1);  
         std::string firstPicTimeStr = (const char*)sqlite3_column_text(stmt, 2);        
         int index = sqlite3_column_int(stmt, 3);        
@@ -229,12 +228,13 @@ static std::vector<ListItem> loadItemsFromDatabase(sqlite3* db) {
         unsigned char* plateImageBuf = new unsigned char[imageByteCount];        
         memcpy(plateImageBuf, imageDataPtr, imageByteCount);        
         
-        ListItem item(
+        ListItem *item = ListItem::createListItem(
+            index,
             plateImageBuf,
-             imageByteCount,
-              plateText, firstPicTimeStr,
-               index, country, moveDirection, plateListType);        
-        items.push_back(item);        
+            imageByteCount,
+            plateText, firstPicTimeStr,
+            country, moveDirection, plateListType);        
+        items.push_back(*item);        
     }
 
     sqlite3_finalize(stmt);
