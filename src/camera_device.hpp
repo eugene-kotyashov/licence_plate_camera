@@ -65,10 +65,18 @@ struct CamLoginInfo
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
         curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, method.c_str());
         curl_easy_setopt(curl, CURLOPT_USERPWD, auth.c_str());
-
+        struct curl_slist *hs=NULL;
+        hs = curl_slist_append(hs, "Content-Type: application/xml");
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, hs);
         // curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, data);
+        if (method == "PUT") {
+            curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data->c_str());
+            curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, strlen(data->c_str()));
+        } else {
+            curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
+            curl_easy_setopt(curl, CURLOPT_WRITEDATA, data);
+        }
+        
 
         CURLcode res = curl_easy_perform(curl);
         bool result = false;
@@ -91,7 +99,7 @@ struct CamLoginInfo
 };
 
 char listAuditInputXML[] =
-     "<LPListAuditSearchDescription version=\"2.0\" xmlns=\"http://www.isapi.org/ver20/XMLSchema\"><searchID></searchID><searchResultPosition></searchResultPosition><maxResults></maxResults><type></type><LicensePlate></LicensePlate><cardNo></cardNo><cardID></cardID></LPListAuditSearchDescription>";
+     "<LPListAuditSearchDescription version=\"2.0\" xmlns=\"http://www.isapi.org/ver20/XMLSchema\"><searchID></searchID><searchResultPosition></searchResultPosition><maxResults></maxResults><type></type><LicensePlate></LicensePlate><cardNo></cardNo><cardID></cardID></LPListAuditSearchDescription>\r\n";
 
 const char descItDeviceAbilityXML[] =
  R"XML(<?xml version="1.0" encoding="utf-8"?><ITDeviceAbility version="2.0"><channelNO></channelNO></ITDeviceAbility>)XML";
@@ -222,11 +230,20 @@ struct CameraDevice
     }
     
     // Активация тревожного выхода №1
-    bool TriggerAlarmOutput(const std::string& CAMERA_IP, int outputID) {
-        std::string url = "http://" + std::string(CAMERA_IP) + "/ISAPI/System/IO/outputs/" 
-        + std::to_string(outputID) + "/trigger";
-        std::string res;
-        return camLoginInfo.SendHttpRequest(url, "PUT", &res);
+    bool TriggerAlarmOutput(int triggerState, int outputID)
+    {
+        std::string url = "http://" + camLoginInfo.ip + "/ISAPI/System/IO/outputs/" + std::to_string(outputID) + "/trigger";
+       
+        if (triggerState == 1)
+        {
+            std::string data =
+                "<IOPortData xmlns=\"http://www.hikvision.com/ver10/XMLSchema\" version=\"1.0\"><outputState>high</outputState></IOPortData>";
+            return camLoginInfo.SendHttpRequest(url, "PUT", &data);
+        }
+
+        std::string data =
+            "<IOPortData xmlns=\"http://www.hikvision.com/ver10/XMLSchema\" version=\"1.0\"><outputState>low</outputState></IOPortData>";
+        return camLoginInfo.SendHttpRequest(url, "PUT", &data);
     }
 
     bool enableArming(void *table)
@@ -443,9 +460,9 @@ struct CameraDevice
     }
 
     // Функция активации тревожного выхода
-    bool triggerAlarmOutput(int outputNumber)
+    bool triggerAlarmOutput(int triggerState, int outputNumber)
     {
-        if (!TriggerAlarmOutput("192.168.0.64", outputNumber))
+        if (!TriggerAlarmOutput(triggerState, outputNumber))
         {
             std::cout << "error getting alarm out status " << std::endl;
             return false;

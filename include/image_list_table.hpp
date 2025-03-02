@@ -77,11 +77,13 @@ struct ListItem {
     {
         plateImage = new Fl_JPEG_Image(
             nullptr, plateImageJpgBuffer);
+        /*
         if (!plateImage->fail()) {
             std::cout << "plate image loaded" <<
              " w " << plateImage->w() << " h " <<
               plateImage->h()    << std::endl;
         }
+        */
     }
 
 
@@ -217,7 +219,7 @@ static std::vector<ListItem> loadItemsFromDatabase(sqlite3* db) {
         unsigned char* imageDataPtr = 
             (unsigned char*)sqlite3_column_blob(stmt, 0);
         size_t imageByteCount = sqlite3_column_bytes(stmt, 0);    
-        std::cout << "loaded image byte count: " << imageByteCount << std::endl; 
+        // std::cout << "loaded image byte count: " << imageByteCount << std::endl; 
         std::string plateText = (const char*)sqlite3_column_text(stmt, 1);  
         std::string firstPicTimeStr = (const char*)sqlite3_column_text(stmt, 2);        
         int index = sqlite3_column_int(stmt, 3);        

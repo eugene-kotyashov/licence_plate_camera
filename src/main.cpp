@@ -273,9 +273,12 @@ int main(int argc, char *argv[]) {
     gate_control_btn.callback(control_gate_cb, &camera_device);
 
     Fl_Button trigger_alarm_btn(160, 210, 80, 30, "Trigger Alout");
-    trigger_alarm_btn.callback([](Fl_Widget*, void* v) {
+    trigger_alarm_btn.callback([](Fl_Widget* widget, void* v) {
         CameraDevice* camera = static_cast<CameraDevice*>(v);
-        if (!camera->triggerAlarmOutput(OUTPUT_ID)) {
+        auto* window = widget->window();
+        Fl_Choice* gateChoice = (Fl_Choice*)window->child(GATE_CHOICE_ID);  // Gate control combo box
+        int triggerState = gateChoice->value();
+        if (!camera->triggerAlarmOutput(triggerState, OUTPUT_ID)) {
             ui::MessageDialog::showError(
                 "Failed to trigger alarm output. Error: " + 
                 std::to_string(camera->lastError));
